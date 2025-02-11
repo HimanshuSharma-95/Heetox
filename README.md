@@ -38,8 +38,6 @@ Dependency Injection: Dagger Hilt
 
 Networking: Retrofit & OkHttp
 
-Local Storage: Room Database
-
 State Management: ViewModel & LiveData
 
 Pagination: Jetpack Paging 3
