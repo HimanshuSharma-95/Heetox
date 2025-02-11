@@ -1,0 +1,26 @@
+package com.heetox.app.Model.Product
+
+data class ProductData(
+    val __v: Int,
+    val _id: String,
+    val brand_name: String,
+    val createdAt: String,
+    val dietry_fiber: Int,
+    val fetchCount: Int,
+    val fruitsVegetablesPercentage: Float,
+    val ingredients: List<Ingredient>,
+    val isliked: Boolean,
+    val likesCount: Int,
+    val nutritional_value: NutritionalValue,
+    val price: Int,
+    val product_back_image: String,
+    val product_barcode: String,
+    val product_category: String,
+    val product_sub_category: String,
+    val product_front_image: String,
+    val product_keywords: List<String>,
+    val product_name: String,
+    val rank : Int,
+    val ratings: Ratings,
+    val updatedAt: String,
+)
