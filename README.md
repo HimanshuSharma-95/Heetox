@@ -1,4 +1,5 @@
 Heetox 🌿
+-
 
 Heetox is a health-focused Android application that empowers users to make healthier 
 food choices by scanning packaged food barcodes to get nutritional information and
