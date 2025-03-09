@@ -10,7 +10,8 @@ and offers healthier product alternatives.
 
 Features ✨
 
-🟢 **Barcode Scanning**: Quickly scan packaged food barcodes to retrieve nutritional information.
+🟢 **Barcode Scanning**: Quickly scan packaged food barcodes to retrieve nutritional information. 
+
 🟢 **Health Impact Insights**: Alerts users about potential health concerns of the product.
 🟢 **Nutritional Score**: Rates products from A to E, where A indicates a healthier choice.
 🟢 **Healthier Alternatives**: Suggests better food alternatives.
