@@ -1,7 +1,6 @@
 package com.heetox.app.Screens.PostsScreen
 
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -47,14 +46,14 @@ import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.items
 import coil.compose.AsyncImage
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.heetox.app.Model.Post.Post
 import com.heetox.app.ViewModel.Authentication.AuthenticationViewModel
 import com.heetox.app.ViewModel.PostVM.PostsViewModel
 import com.heetox.app.ui.theme.HeetoxDarkGray
 import com.heetox.app.ui.theme.HeetoxDarkGreen
 import com.heetox.app.ui.theme.HeetoxWhite
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import kotlinx.coroutines.delay
 
 
@@ -79,7 +78,7 @@ fun Postscreen(PostVM: PostsViewModel, AuthVM: AuthenticationViewModel) {
 
     LaunchedEffect(lazyPagingItems?.itemCount) {
         listState.scrollToItem(PostVM.scrollIndex, PostVM.scrollOffset)
-        Log.d("==>", "Restored scroll position: Index=${PostVM.scrollIndex}, Offset=${PostVM.scrollOffset}")
+//        Log.d("==>", "Restored scroll position: Index=${PostVM.scrollIndex}, Offset=${PostVM.scrollOffset}")
     }
 
 
@@ -89,7 +88,7 @@ fun Postscreen(PostVM: PostsViewModel, AuthVM: AuthenticationViewModel) {
             .collect { (index, offset) ->
                 if (index != 0 || offset != 0) {
                     PostVM.saveScrollPosition(index, offset)
-                    Log.d("==>", "Saved scroll position: Index=$index, Offset=$offset")
+//                    Log.d("==>", "Saved scroll position: Index=$index, Offset=$offset")
                 }
             }
     }
@@ -147,7 +146,6 @@ fun Postscreen(PostVM: PostsViewModel, AuthVM: AuthenticationViewModel) {
             lazyPagingItems?.let { items ->
                 items(items, key = { it._id }){ post ->
                     post?.let {
-
 
 
 

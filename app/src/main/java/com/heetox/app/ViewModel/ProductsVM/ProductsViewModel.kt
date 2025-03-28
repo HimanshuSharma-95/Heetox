@@ -78,13 +78,25 @@ class ProductsViewModel @Inject constructor(private val ProductRepo : productRep
         get() = ProductRepo.accessSubCategoryData
 
 
+    private val _mainCategory = MutableStateFlow<String>("")
+    val mainCategory: StateFlow<String> = _mainCategory
+
+
+    fun setMainCategory(newSubCategory: String) {
+        _mainCategory.value = newSubCategory
+
+    }
+
+
+
     private val _subcategory = MutableStateFlow<String>("")
     val subcategory: StateFlow<String> = _subcategory
 
-    fun setSubcategory(subcat: String) {
-        _subcategory.value = subcat
-    }
 
+    fun setSubcategory(newSubCategory: String) {
+            _subcategory.value = newSubCategory
+
+    }
 
 
 
@@ -243,6 +255,13 @@ class ProductsViewModel @Inject constructor(private val ProductRepo : productRep
 
         }
 
+    }
+
+
+    fun clearAlternativeProductList(){
+        viewModelScope.launch {
+            ProductRepo.clearAlternativeProductList()
+        }
     }
 
 

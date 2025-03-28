@@ -26,8 +26,10 @@ class PostsViewModel @Inject constructor(
     private val tokenFlow = authRepository.Localdata.map { it?.Token ?: "" }
     private var currentToken: String = ""
 
+
     init {
         // Observe token changes
+        //if same token keeps the
         viewModelScope.launch {
             tokenFlow.collect { newToken ->
                 if (currentToken != newToken) {
@@ -57,34 +59,17 @@ class PostsViewModel @Inject constructor(
         // If we have a cached result, return it directly
         val lastResult = currentResult
         if (lastResult != null) {
-            // If token is empty (user not logged in or anonymous), reset state to default
-            if (authToken.isEmpty()) {
-                return lastResult.map { pagingData ->
-                    pagingData.map { post ->
-                        // Initialize the PostState with default values if no token
-                        _postState[post._id] = PostState(
-                            isLiked = false,
-                            isBookmarked = false,
-                            likeCount = post.likesCount
-                        )
-                        post
-                    }
-                }.also { currentResult = it }
-            }else{
-                return lastResult.map { pagingData ->
-                    pagingData.map { post ->
-                        // Initialize the PostState with default values if no token
-                        _postState[post._id] = PostState(
-                            isLiked =post.isliked,
-                            isBookmarked = post.isbookmarked,
-                            likeCount = post.likesCount
-                        )
-                        post
-                    }
-                }.also { currentResult = it }
-            }
 
-            return lastResult
+            return lastResult.map { pagingData ->
+                pagingData.map { post ->
+                    _postState[post._id] = PostState(
+                        isLiked = post.isliked,
+                        isBookmarked = post.isbookmarked,
+                        likeCount = post.likesCount
+                    )
+                    post
+                }
+            }.also { currentResult = it }
             // Return cached result if token is available and state has already been populated
         }
 
@@ -118,7 +103,6 @@ class PostsViewModel @Inject constructor(
      saveScrollPosition(0,0)
         currentResult = newResult
         return newResult
-
 
 
     }

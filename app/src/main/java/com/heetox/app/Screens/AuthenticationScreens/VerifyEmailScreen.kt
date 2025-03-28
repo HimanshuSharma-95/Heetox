@@ -146,7 +146,7 @@ mutableStateOf(false)
              }
              is Resource.Nothing -> {
 
-loading = false
+              loading = false
                  error = ""
              }
              is Resource.Success -> {

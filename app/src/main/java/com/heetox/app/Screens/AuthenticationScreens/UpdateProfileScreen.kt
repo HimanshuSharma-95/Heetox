@@ -1,7 +1,6 @@
 package com.heetox.app.Screens.AuthenticationScreens
 
 import android.net.Uri
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
@@ -70,8 +69,6 @@ import com.heetox.app.ui.theme.HeetoxDarkGray
 import com.heetox.app.ui.theme.HeetoxDarkGreen
 import com.heetox.app.ui.theme.HeetoxGreen
 import com.heetox.app.ui.theme.HeetoxWhite
-
-
 
 
 @Composable
@@ -226,10 +223,10 @@ fun updateprofilescreen(navHostController: NavHostController){
                             .transformations(CircleCropTransformation())
                             .listener(
                                 onError = { request, throwable ->
-                                    Log.e(
-                                        "Profile Image",
-                                        "Error loading image: ${request.data} , $throwable"
-                                    )
+//                                    Log.e(
+//                                        "Profile Image",
+//                                        "Error loading image: ${request.data} , $throwable"
+//                                    )
                                 }
                             )
                             .build()

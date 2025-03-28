@@ -85,7 +85,7 @@ class AuthenticationRepository @Inject constructor(val Api : AuthenticationInter
         get() = FetchUser
 
 
-    //uplaod Image
+    //upload Image
     private  var UplaodProfileImage = MutableStateFlow<Resource<AuthUser>>(Resource.Nothing())
 
     val accessUplaodprofileImage :StateFlow<Resource<AuthUser>>
@@ -357,7 +357,7 @@ class AuthenticationRepository @Inject constructor(val Api : AuthenticationInter
 
 
 
-// to get file image file type
+// to get file image file type (e.g., "image/png", "image/jpeg")
     private fun getMimeType(context: Context,uri: Uri): String? {
         val contentResolver = context.contentResolver
         return contentResolver.getType(uri)
@@ -395,8 +395,6 @@ class AuthenticationRepository @Inject constructor(val Api : AuthenticationInter
         UplaodProfileImage.emit(Resource.Loading())
 
         try {
-
-            UplaodProfileImage.emit(Resource.Loading())
 
             val mimeType = getMimeType(context, imageUri)
             val inputStream = context.contentResolver.openInputStream(imageUri)

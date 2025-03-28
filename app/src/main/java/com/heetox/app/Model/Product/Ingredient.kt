@@ -1,5 +1,6 @@
 package com.heetox.app.Model.Product
 
+
 data class Ingredient(
     val __v: Int,
     val description: String,

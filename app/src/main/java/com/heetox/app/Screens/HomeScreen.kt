@@ -30,7 +30,7 @@ import com.heetox.app.ui.theme.HeetoxWhite
 fun Homescreen(navController: NavHostController,Productviewmodel: ProductsViewModel){
 
     val Authviewmodel : AuthenticationViewModel = hiltViewModel()
-    var scrollState = rememberScrollState()
+    val scrollState = rememberScrollState()
     val UserData = Authviewmodel.Localdata.collectAsState()
 
     val name = UserData.value?.Name
@@ -81,8 +81,6 @@ fun Homescreen(navController: NavHostController,Productviewmodel: ProductsViewMo
 
             //about us
             AboutusHome(navController)
-
-
 
 
             Spacer(modifier = Modifier.height(10.dp))

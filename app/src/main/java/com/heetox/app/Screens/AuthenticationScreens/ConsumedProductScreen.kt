@@ -231,7 +231,6 @@ if(!isConnected){
                    width = 355
                )
 
-
            }
 
 
@@ -1383,9 +1382,14 @@ Row(
 
 ) {
 
+
     Column(
         modifier = Modifier
-            .padding(5.dp),
+            .fillMaxHeight()
+            .clip(RoundedCornerShape(10.dp))
+            .background(HeetoxLightGray)
+            .padding(5.dp)
+        ,
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
@@ -1393,7 +1397,7 @@ Row(
         AsyncImage(
             model = data.consumed_products.product_front_image,
             contentDescription = "",
-            modifier = Modifier.size(110.dp)
+            modifier = Modifier.size(100.dp)
         )
 
 
@@ -1412,19 +1416,18 @@ Row(
         Column(
 
             modifier = Modifier
-                .padding(end = 10.dp)
+                .padding(horizontal = 10.dp)
 
         ){
             Text(
                 text = data.consumed_At_time.ifEmpty { "NA" },
-                fontSize = 13.sp,
+                fontSize = 12.sp,
                 color = HeetoxDarkGray,
                 modifier = Modifier.fillMaxWidth(),
-                textAlign = TextAlign.End,
             )
         }
 
-        Spacer(modifier = Modifier.height(5.dp))
+//        Spacer(modifier = Modifier.height(2.dp))
 
         Row(
             modifier = Modifier
@@ -1437,26 +1440,30 @@ Row(
             Column(
                 modifier = Modifier
 //                .weight(1f)
-//                .background(HeetoxGreen)
+                    .padding(start = 10.dp)
             ) {
 
+                val truncatedText = data.consumed_products.product_name
+                    .split(" ") // Split into words
+                    .take(3) // Take only the first 3 words
+                    .joinToString(" ") // Join them back
+                    .let { if (it.length < data.consumed_products.product_name.length) "$it..." else it } // Append "..." if truncated
 
                 Text(
-                    text = data.consumed_products.product_name.ifEmpty { "NA" },
-                    fontSize = 14.sp,
-                    color = Color.Black,
-                    textAlign = TextAlign.Center
+                    text = truncatedText.ifEmpty { "NA" },
+                    fontSize = 12.sp,
+                    color = Color.Black
                 )
 
                 Text(
                     text = data.consumed_At_date.ifEmpty { "NA" },
-                    fontSize = 15.sp,
+                    fontSize = 12.sp,
                     color = Color.Black,
                 )
 
                 Text(
                     text = data.serving_size.toString().take(5) + " g".ifEmpty { "NA" },
-                    fontSize = 15.sp,
+                    fontSize = 12.sp,
                     color = Color.Black,
                 )
             }
@@ -1693,7 +1700,6 @@ fun CalorieBarVertical(
                 cornerRadius = CornerRadius(x = 10f, y = 10f)
             )
         }
-
 
 
     }

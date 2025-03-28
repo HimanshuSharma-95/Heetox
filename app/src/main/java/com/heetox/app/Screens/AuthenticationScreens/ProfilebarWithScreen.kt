@@ -90,75 +90,76 @@ fun ProfileBarwithScreen(navController: NavHostController){
 
     var loginitems : List<NavDrawer> = emptyList()
 
+
     if(UserData.value != null){
 
-           if(UserData.value!!.EmailStatus){
+        if(UserData.value!!.EmailStatus){
 
-               loginitems = listOf(
-                   NavDrawer(
-                       title = "Update Profile",
-                       SelectedIcon = Icons.Filled.Edit,
-                       UnselectedIcon = Icons.Outlined.Edit,
-                       route = "updateprofile"
-                   ),
-                   NavDrawer(
-                       title = "Change Password",
-                       SelectedIcon = Icons.Filled.Lock,
-                       UnselectedIcon = Icons.Outlined.Lock,
-                       route = "changepassword"
-                   ),
-                   NavDrawer(
-                       title = "Privacy Policy",
-                       SelectedIcon = Icons.Filled.PrivacyTip,
-                       UnselectedIcon = Icons.Outlined.PrivacyTip,
-                       route = "privacypolicy"
-                   ),
-                   NavDrawer(
-                       title = "Logout",
-                       SelectedIcon = Icons.Filled.Logout,
-                       UnselectedIcon = Icons.Outlined.Logout,
-                       route = "logout"
-                   )
+            loginitems = listOf(
+                NavDrawer(
+                    title = "Update Profile",
+                    SelectedIcon = Icons.Filled.Edit,
+                    UnselectedIcon = Icons.Outlined.Edit,
+                    route = "updateprofile"
+                ),
+                NavDrawer(
+                    title = "Change Password",
+                    SelectedIcon = Icons.Filled.Lock,
+                    UnselectedIcon = Icons.Outlined.Lock,
+                    route = "changepassword"
+                ),
+                NavDrawer(
+                    title = "Privacy Policy",
+                    SelectedIcon = Icons.Filled.PrivacyTip,
+                    UnselectedIcon = Icons.Outlined.PrivacyTip,
+                    route = "privacypolicy"
+                ),
+                NavDrawer(
+                    title = "Logout",
+                    SelectedIcon = Icons.Filled.Logout,
+                    UnselectedIcon = Icons.Outlined.Logout,
+                    route = "logout"
+                )
 
-               )
-           }else{
+            )
+        }else{
 
-               loginitems = listOf(
-                   NavDrawer(
-                       title = "Update Profile",
-                       SelectedIcon = Icons.Filled.Edit,
-                       UnselectedIcon = Icons.Outlined.Edit,
-                       route = "updateprofile"
-                   ),
-                   NavDrawer(
-                       title = "Change Password",
-                       SelectedIcon = Icons.Filled.Lock,
-                       UnselectedIcon = Icons.Outlined.Lock,
-                       route = "changepassword"
-                   ),
-                   NavDrawer(
-                       title = "Verify Email",
-                       SelectedIcon = Icons.Filled.MarkEmailRead,
-                       UnselectedIcon = Icons.Outlined.MarkEmailRead,
-                       route = "verifyemail"
-                   ),
-                   NavDrawer(
-                       title = "Privacy Policy",
-                       SelectedIcon = Icons.Filled.PrivacyTip,
-                       UnselectedIcon = Icons.Outlined.PrivacyTip,
-                       route = "privacypolicy"
-                   ),
-                   NavDrawer(
-                       title = "Logout",
-                       SelectedIcon = Icons.Filled.Logout,
-                       UnselectedIcon = Icons.Outlined.Logout,
-                       route = "logout"
-                   )
+            loginitems = listOf(
+                NavDrawer(
+                    title = "Update Profile",
+                    SelectedIcon = Icons.Filled.Edit,
+                    UnselectedIcon = Icons.Outlined.Edit,
+                    route = "updateprofile"
+                ),
+                NavDrawer(
+                    title = "Change Password",
+                    SelectedIcon = Icons.Filled.Lock,
+                    UnselectedIcon = Icons.Outlined.Lock,
+                    route = "changepassword"
+                ),
+                NavDrawer(
+                    title = "Verify Email",
+                    SelectedIcon = Icons.Filled.MarkEmailRead,
+                    UnselectedIcon = Icons.Outlined.MarkEmailRead,
+                    route = "verifyemail"
+                ),
+                NavDrawer(
+                    title = "Privacy Policy",
+                    SelectedIcon = Icons.Filled.PrivacyTip,
+                    UnselectedIcon = Icons.Outlined.PrivacyTip,
+                    route = "privacypolicy"
+                ),
+                NavDrawer(
+                    title = "Logout",
+                    SelectedIcon = Icons.Filled.Logout,
+                    UnselectedIcon = Icons.Outlined.Logout,
+                    route = "logout"
+                )
 
 
-               )
+            )
 
-           }
+        }
 
     }else{
 
@@ -191,6 +192,7 @@ fun ProfileBarwithScreen(navController: NavHostController){
         )
 
     }
+
 
 
     val logoutitems = listOf(
@@ -229,6 +231,7 @@ fun ProfileBarwithScreen(navController: NavHostController){
         var selectedIndex by rememberSaveable {
             mutableStateOf(0)
         }
+
         ModalNavigationDrawer(
             drawerContent = {
 

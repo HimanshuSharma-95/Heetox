@@ -55,8 +55,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.heetox.app.Composables.AuthCompose.BaseHeading
 import com.heetox.app.Composables.AuthCompose.Input
-import com.heetox.app.Composables.AuthCompose.PasswordInput
 import com.heetox.app.Composables.AuthCompose.LoadingOverlay
+import com.heetox.app.Composables.AuthCompose.PasswordInput
 import com.heetox.app.Model.Authentication.AuthUser
 import com.heetox.app.Model.Authentication.LoginData
 import com.heetox.app.Model.Authentication.LoginSend
@@ -116,6 +116,16 @@ fun RegisterInputs(navController: NavHostController){
     val genderoptions = listOf("male","female","other")
     var isgenderexpanded by rememberSaveable { mutableStateOf(false) }
 
+
+    //for datepicker
+//    val calendar = Calendar.getInstance()
+//
+//    // Extract current date
+//    val year = calendar.get(Calendar.YEAR)
+//    val month = calendar.get(Calendar.MONTH)
+//    val day = calendar.get(Calendar.DAY_OF_MONTH)
+//    // State to show/hide DatePickerDialog
+//    var showDatePicker by remember { mutableStateOf(false) }
 
     if(loading){
 
@@ -219,6 +229,9 @@ fun RegisterInputs(navController: NavHostController){
 
                     Input("name", name, { name = it }, KeyboardOptions.Default.copy(imeAction = ImeAction.Next))
 
+
+
+
                     Input("D0B YYYY-MM-DD", dob, { dob = it.trimEnd() },KeyboardOptions.Default.copy(imeAction = ImeAction.Next) )
 
 
@@ -253,7 +266,7 @@ Column(
 ){
 
     DropdownMenu(
-        expanded =isgenderexpanded,
+        expanded = isgenderexpanded,
         onDismissRequest = { isgenderexpanded = false },
         modifier = Modifier
             .width(300.dp)

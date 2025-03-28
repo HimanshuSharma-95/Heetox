@@ -103,10 +103,6 @@ fun VerifyemailStep1(viewmodel: AuthenticationViewModel,email : String, navContr
                            .height(180.dp)
                    )
 
-
-
-
-
                        Text(
                            text = "An OTP will be Sent to Your Email Account",
                            fontSize = 15.sp,

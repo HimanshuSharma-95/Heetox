@@ -216,9 +216,9 @@ fun ProductCardImage(Image : String, name : String){
 
         Text(
             text = name.ifEmpty { "NA" },
-            fontSize = 14.sp,
+            fontSize = 12.sp,
             color = Color.Black,
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
         )
 
     }
@@ -250,7 +250,7 @@ fun ProductsCardRankAndRaing(nutriscore : String,rank : Int ){
     ){
 
         Text(text = "#${rank.toString().ifEmpty { "NA" }}",
-            fontSize = 24.sp,
+            fontSize = 20.sp,
             fontWeight = FontWeight.Bold,
             color = HeetoxDarkGreen,
         )
@@ -258,20 +258,20 @@ fun ProductsCardRankAndRaing(nutriscore : String,rank : Int ){
         when(nutriscore){
 
             "A" -> AsyncImage(model = R.drawable.arating, contentDescription = "Rating Image", modifier = Modifier
-                .width(130.dp)
-                .padding(end = 20.dp) )
+                .width(110.dp)
+                .padding(end = 10.dp) )
             "B" -> AsyncImage(model = R.drawable.brating, contentDescription = "Rating Image" , modifier = Modifier
-                .width(130.dp)
-                .padding(end = 20.dp))
+                .width(110.dp)
+                .padding(end = 10.dp))
             "C" -> AsyncImage(model = R.drawable.crating, contentDescription = "Rating Image",modifier = Modifier
-                .width(130.dp)
-                .padding(end = 20.dp))
+                .width(110.dp)
+                .padding(end = 10.dp))
             "D" -> AsyncImage(model = R.drawable.drating, contentDescription = "Rating Image",modifier = Modifier
-                .width(130.dp)
-                .padding(end = 20.dp))
+                .width(110.dp)
+                .padding(end = 10.dp))
             "E" -> AsyncImage(model = R.drawable.erating, contentDescription = "Rating Image",modifier = Modifier
-                .width(130.dp)
-                .padding(end = 20.dp))
+                .width(110.dp)
+                .padding(end = 10.dp))
             else -> Text(text = "Rating NA")
         }
 
@@ -311,7 +311,7 @@ fun ProductCardIngredeints(ingredients : List<String>){
         com.google.accompanist.flowlayout.FlowRow {
             Text(
                 text = "Ingredients: ",
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 color = Color.Black,
                 lineHeight = 18.sp // Adjust the line height to reduce spacing between lines
             )
@@ -338,7 +338,7 @@ fun ProductCardIngredeints(ingredients : List<String>){
 //        if (isTextOverflowing && !showMore) {
             Text(
                 text = "Learn More",
-                fontSize = 14.sp,
+                fontSize = 12.sp,
                 color = HeetoxDarkGray,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier
@@ -377,7 +377,7 @@ fun ProductCardPriceAndLike( price : Int,
     ){
 
         Text(text = if(price != 0) "₹ ${price}" else "Price NA",
-            fontSize = 18.sp,
+            fontSize = 14.sp,
             color = HeetoxDarkGray,
             fontWeight = FontWeight.Bold
         )
@@ -388,7 +388,7 @@ fun ProductCardPriceAndLike( price : Int,
         Row(
 
             modifier = Modifier
-                .padding(end = 20.dp),
+                .padding(end = 10.dp),
             verticalAlignment = Alignment.CenterVertically
 
         ){
@@ -444,7 +444,7 @@ fun ProductCardPriceAndLike( price : Int,
                     .padding(horizontal = 0.dp),
                 color = HeetoxDarkGray,
                 fontWeight = FontWeight.Bold,
-                fontSize = 16.sp,
+                fontSize = 14.sp,
             )
 
             Text(text = likeCount.toString().ifEmpty { " 0" },
@@ -452,7 +452,7 @@ fun ProductCardPriceAndLike( price : Int,
                     .padding(horizontal = 3.dp),
                 color = HeetoxDarkGray,
                 fontWeight = FontWeight.Bold,
-                fontSize = 16.sp
+                fontSize = 14.sp
             )
 
 

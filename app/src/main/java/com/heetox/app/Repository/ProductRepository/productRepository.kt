@@ -1,6 +1,7 @@
 package com.heetox.app.Repository.ProductRepository
 
 import android.util.Log
+import com.google.gson.Gson
 import com.heetox.app.ApiInterface.ProductInterface
 import com.heetox.app.Model.Authentication.ErrorResponse
 import com.heetox.app.Model.Product.AlternateResponseItem
@@ -17,7 +18,6 @@ import com.heetox.app.Model.Product.MostScannedResponse
 import com.heetox.app.Model.Product.ProductbyBarcodeResponse
 import com.heetox.app.Model.Product.SubCategoriesResponse
 import com.heetox.app.Utils.Resource
-import com.google.gson.Gson
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -658,7 +658,6 @@ try {
         }
 
 
-
     }
 
 
@@ -697,6 +696,10 @@ try {
     }
 
 
+
+    suspend fun clearAlternativeProductList(){
+        AlternateProductData.emit(Resource.Nothing())
+    }
 
 
 

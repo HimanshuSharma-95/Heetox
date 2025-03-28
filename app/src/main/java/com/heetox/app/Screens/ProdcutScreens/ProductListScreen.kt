@@ -1,6 +1,7 @@
 package com.heetox.app.Screens.ProdcutScreens
 
 import android.annotation.SuppressLint
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,7 +24,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -34,18 +34,21 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.heetox.app.Composables.GeneralCompose.SubCategoriesItem
 import com.heetox.app.Composables.ProductCompose.ProductCard
+import com.heetox.app.Model.Product.AlternateResponseItem
 import com.heetox.app.Utils.Resource
 import com.heetox.app.ViewModel.Authentication.AuthenticationViewModel
 import com.heetox.app.ViewModel.ProductsVM.ProductsViewModel
 import com.heetox.app.ui.theme.HeetoxBrightGreen
 import com.heetox.app.ui.theme.HeetoxDarkGray
 import com.heetox.app.ui.theme.HeetoxWhite
-import com.google.accompanist.swiperefresh.SwipeRefresh
-import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 
 
+
+//screen of home screen categories products
 @SuppressLint("MutableCollectionMutableState")
 @Composable
 fun ProductListScreen(
@@ -53,79 +56,121 @@ fun ProductListScreen(
     AuthVM: AuthenticationViewModel,
     ProductVM: ProductsViewModel,
     navController: NavHostController,
+    source :String? = null
 ) {
+
     val context = LocalContext.current
 
-    //only set by product bardcode details clicked better aletrnative
-    val CurrentSubCategory = ProductVM.subcategory.collectAsState().value
+    val userData = AuthVM.Localdata.collectAsState()
+    val token = userData.value?.Token ?: ""
 
     val subCategories = ProductVM.SubCategoriesData.collectAsState()
-    var subCategoriesList by rememberSaveable {
-        mutableStateOf(emptyList<String>())
+    val subCategoriesList = subCategories.value.data?.subcategories
+
+
+    var currentSubCategory by rememberSaveable{
+        mutableStateOf("")
     }
-    var mainCategory by rememberSaveable { mutableStateOf(subCategories.value.data?.main_category ?: "") }
 
-    var AllProducts = ProductVM.AlternativeProductData.collectAsState()
-    var dataList by rememberSaveable { mutableStateOf(AllProducts.value.data) }
+    //sub categories states
+    var subCategoryError by rememberSaveable {
+        mutableStateOf("")
+    }
+    var subCategoryLoading by rememberSaveable {
+        mutableStateOf(true)
+    }
 
-    val UserData = AuthVM.Localdata.collectAsState()
 
-    var loadingsubcategories by rememberSaveable { mutableStateOf(false) }
-    var errorsubcategories by rememberSaveable { mutableStateOf("") }
-    var loadingsubcategorieslist by rememberSaveable { mutableStateOf(true) }
-    var errorsubcategorieslist by rememberSaveable { mutableStateOf("") }
 
-    var isApiCalled by rememberSaveable { mutableStateOf(false) }
-    var currentsubCategory by rememberSaveable {
+    val allProduct = ProductVM.AlternativeProductData.collectAsState()
+    var dataList : ArrayList<AlternateResponseItem>? = allProduct.value.data
 
-        mutableStateOf(CurrentSubCategory.ifEmpty {
-            subCategoriesList.getOrNull(0) ?: ""
-        })
-
+    //data list states
+    var dataListError by rememberSaveable {
+        mutableStateOf("")
+    }
+    var dataListLoading by rememberSaveable {
+        mutableStateOf(true)
     }
 
     val lazyListState = rememberLazyListState()
 
-    val currentToken = rememberUpdatedState(UserData.value?.Token)
+    LaunchedEffect(subCategories.value) {
 
-    // getting sub categories
-    LaunchedEffect(key1 = category) {
-        if (!isApiCalled) {
-            isApiCalled = true
-            ProductVM.getSubCategory(category)
+        when(subCategories.value){
+            is Resource.Error -> {
+                subCategoryError = "Oops! Couldn't Load :("
+                subCategoryLoading = false
+            }
+            is Resource.Loading -> {
+                subCategoryLoading = true
+                subCategoryError = ""
+            }
+            is Resource.Nothing -> {}
+            is Resource.Success ->{
+
+                subCategoryError = ""
+                subCategoryLoading = false
+
+                if (currentSubCategory.isEmpty() && subCategoriesList?.isNotEmpty() == true) {
+                    currentSubCategory = subCategoriesList[0]
+
+                }
+                Log.e("1 --->", "ProductListScreen: ${currentSubCategory} ${subCategoriesList} ", )
+
+
+            }
+
         }
     }
 
 
 
-    // getting sub categories list
-    LaunchedEffect(key1 = currentsubCategory) {
-        val token = currentToken.value ?: ""
+    LaunchedEffect(currentSubCategory) {
+        if (currentSubCategory.isNotEmpty() && subCategoriesList?.isNotEmpty() == true) {
+            ProductVM.getalternativeproducts(currentSubCategory, token)
 
-        if (currentsubCategory.isNotEmpty()) {
-            ProductVM.getalternativeproducts(currentsubCategory.replace(" ", "_"), token)
+            val index = subCategoriesList.indexOf(currentSubCategory.replace("_", " ")) // Find the index
+            if (index != -1) {
+                lazyListState.animateScrollToItem(index) // Scroll to the selected item
+            }
         }
-
-        val index = subCategoriesList.indexOf(currentsubCategory.replace("_", " "))
-
-        if (index != -1) {
-            lazyListState.animateScrollToItem(index) // Scroll to the selected item
-        }
-
     }
 
 
+    LaunchedEffect(allProduct.value){
+        when(allProduct.value){
+            is Resource.Error ->{
+                dataListLoading = false
+                dataListError = "No Products Available"
+            }
+            is Resource.Loading ->{
+                dataListLoading = true
+                dataListError = ""
+//
+            }
+            is Resource.Nothing -> {}
+            is Resource.Success -> {
+                dataListError = ""
+                dataList = allProduct.value.data
+                dataListLoading = false
+                Log.e("2 --->", "ProductListScreen: ${dataList} ", )
+            }
+        }
+    }
 
 
     // Swipe to refresh functionality
     val swipeRefreshState = rememberSwipeRefreshState(isRefreshing = false)
+
     SwipeRefresh(state = swipeRefreshState, onRefresh = {
         ProductVM.getSubCategory(category) // Trigger refresh
-        ProductVM.getalternativeproducts(currentsubCategory, currentToken.value ?: "")
+        ProductVM.getalternativeproducts(currentSubCategory,token)
 
     }) {
 
         val listState = rememberLazyListState()
+
 
         Column(
             modifier = Modifier
@@ -139,7 +184,9 @@ fun ProductListScreen(
                 state = listState,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+
                 item {
+
                     Spacer(modifier = Modifier.height(15.dp))
 
                     Column(
@@ -150,7 +197,7 @@ fun ProductListScreen(
                             .background(Color.White)
                             .padding(10.dp),
                         verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
+//                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
 
                         Column(
@@ -159,59 +206,75 @@ fun ProductListScreen(
                                 .padding(start = 10.dp, bottom = 10.dp)
                         ) {
                             Text(
-                                text = mainCategory.ifEmpty { "" },
+                                text = category.ifEmpty { "" },
                                 color = HeetoxDarkGray,
                             )
                         }
 
-                        if (loadingsubcategories || errorsubcategories.isNotEmpty()) {
-                            if (loadingsubcategories) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(30.dp),
-                                    color = HeetoxBrightGreen
-                                )
-                            } else {
-                                swipeRefreshState.isRefreshing = false
-                                Text(
-                                    text = "Oops! Couldn't Load Products",
-                                    fontSize = 15.sp,
-                                    color = HeetoxDarkGray
-                                )
+                        if (subCategoryLoading || subCategoryError.isNotEmpty()) {
+                            Column(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+
+                                if (subCategoryLoading) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(30.dp),
+                                        color = HeetoxBrightGreen
+                                    )
+                                } else {
+                                    swipeRefreshState.isRefreshing = false
+                                    Text(
+                                        text = "Oops! Couldn't Load Products",
+                                        fontSize = 15.sp,
+                                        color = HeetoxDarkGray
+                                    )
+                                }
+
                             }
                         } else {
-                            if (subCategoriesList.isEmpty()) {
-                                Text(
-                                    text = "No Subcategories Available",
-                                    fontSize = 15.sp,
-                                    color = HeetoxDarkGray
-                                )
-                            } else {
-                                LazyRow(
-                                    state = lazyListState
-                                ){
-                                    items(subCategoriesList.toList()) { item ->
-                                        SubCategoriesItem(
-                                            item = item,
-                                            isSelected = currentsubCategory.replace("_"," ") == item,
-                                            onClick = { selectedCategory ->
-                                                if (currentsubCategory != selectedCategory) {
-                                                    currentsubCategory = selectedCategory
-                                                }
-                                                ProductVM.setSubcategory(selectedCategory.replace(" ", "_"))
-                                            }
 
-                                        )
-
-                                    }
+                            if (subCategoriesList?.isEmpty() == true) {
+                                Column(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = "No Subcategories Available",
+                                        fontSize = 15.sp,
+                                        color = HeetoxDarkGray
+                                    )
                                 }
+                            } else {
+                                    LazyRow(
+                                        state = lazyListState,
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        items(subCategoriesList.orEmpty()) { item ->
+                                            SubCategoriesItem(
+                                                item = item,
+                                                isSelected = currentSubCategory.replace("_", " ") == item,
+                                                onClick = { selectedCategory ->
+                                                    if (currentSubCategory != selectedCategory) {
+                                                        currentSubCategory = selectedCategory
+                                                    }
+                                                    ProductVM.setSubcategory(selectedCategory.replace(" ", "_"))
+                                                }
+                                            )
+                                        }
+                                    }
+
                             }
-                            Spacer(modifier = Modifier.height(5.dp))
                         }
+
+
                     }
+
+
                 }
 
-                // Loading state for subcategory product list
-                if (loadingsubcategorieslist || errorsubcategorieslist.isNotEmpty()) {
+                if (dataListLoading || dataListError.isNotEmpty()) {
                     item {
                         Column(
                             modifier = Modifier
@@ -221,7 +284,7 @@ fun ProductListScreen(
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.Center
                         ) {
-                            if (loadingsubcategorieslist) {
+                            if (dataListLoading) {
                                 CircularProgressIndicator(
                                     modifier = Modifier.size(30.dp),
                                     color = HeetoxBrightGreen
@@ -237,101 +300,66 @@ fun ProductListScreen(
                     }
                 } else {
                     // If dataList is empty, show a message
-                  if(subCategoriesList.isNotEmpty()){
+                    if (subCategoriesList != null) {
 
-                      if (dataList.isNullOrEmpty()) {
-                          item {
-                              Text(
-                                  text = "No products available",
-                                  fontSize = 16.sp,
-                                  color = HeetoxDarkGray,
-                                  modifier = Modifier.padding(top = 300.dp)
-                              )
-                          }
-                      } else {
-                          // Display product cards
-                          items(dataList!!.toList(), key = { data -> data.product_barcode }) { data ->
-                              var isLiked by remember { mutableStateOf(data.isliked) }
-                              var likeCount by remember { mutableStateOf(data.likesCount) }
+                        if(subCategoriesList.isNotEmpty()){
 
-                              ProductCard(
-                                  data = data,
-                                  ProductVM = ProductVM,
-                                  UserData = UserData,
-                                  context = context,
-                                  navController = navController,
-                                  isLiked = isLiked,
-                                  likeCount = likeCount,
-                                  onLikeCountChange = { likeCount = it },
-                                  onLikeChange = { isLiked = it }
-                              )
-                          }
-                      }
-                  }else{
-                      item {
-                          Text(
-                              text = "No products available",
-                              fontSize = 16.sp,
-                              color = HeetoxDarkGray,
-                              modifier = Modifier.padding(top = 250.dp)
-                          )
-                      }
-                  }
+                            if (!dataList.isNullOrEmpty()) {
+
+                                // Display product cards
+                                items(dataList!!.toList(), key = { data -> data.product_barcode }) { data ->
+                                    var isLiked by remember { mutableStateOf(data.isliked) }
+                                    var likeCount by remember { mutableStateOf(data.likesCount) }
+
+                                    ProductCard(
+                                        data = data,
+                                        ProductVM = ProductVM,
+                                        UserData = userData,
+                                        context = context,
+                                        navController = navController,
+                                        isLiked = isLiked,
+                                        likeCount = likeCount,
+                                        onLikeCountChange = { likeCount = it },
+                                        onLikeChange = { isLiked = it }
+                                    )
+                                }
+                            }
+                        }else{
+                            item {
+                                Text(
+                                    text = "No products available",
+                                    fontSize = 16.sp,
+                                    color = HeetoxDarkGray,
+                                    modifier = Modifier.padding(top = 250.dp)
+                                )
+                            }
+                        }
+                    }
                 }
             }
         }
-    }
 
-    LaunchedEffect(key1 = subCategories.value) {
-        when (subCategories.value) {
-            is Resource.Error -> {
-                errorsubcategories = "Oops! Couldn't Load :("
-                loadingsubcategories = false
             }
-            is Resource.Loading -> {
-                loadingsubcategories = true
-                mainCategory = ""
-                dataList = null
-            }
-            is Resource.Success -> {
-                loadingsubcategories = false
-                subCategoriesList = subCategories.value.data?.subcategories ?: emptyList()
 
-                // Set the initial subcategory only if currentsubCategory is empty
-                if (currentsubCategory.isEmpty() && subCategoriesList.isNotEmpty()) {
-                    currentsubCategory = subCategoriesList[0]
-                }
-
-                mainCategory = subCategories.value.data?.main_category ?: ""
-            }
-            else -> {}
         }
-    }
 
 
-    // Handle product list loading and errors
-    LaunchedEffect(key1 = AllProducts.value) {
-        when (AllProducts.value) {
-            is Resource.Error -> {
-                errorsubcategorieslist = "Oops! Couldn't Load Products :("
-                loadingsubcategorieslist = false
-                dataList = null
-            }
-            is Resource.Loading -> {
-                loadingsubcategorieslist = true
-                dataList = null
-            }
-            is Resource.Success -> {
-                loadingsubcategorieslist = false
-                if (AllProducts.value.data.isNullOrEmpty()) {
-                    dataList = null
-                } else {
-                    dataList = AllProducts.value.data
-                }
-            }
-            else -> {
 
-            }
-        }
-    }
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

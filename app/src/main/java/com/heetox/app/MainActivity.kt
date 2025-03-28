@@ -6,7 +6,6 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.viewModels
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -16,7 +15,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.heetox.app.Screens.NavbottomandNavGraph
 import com.heetox.app.Utils.Resource
 import com.heetox.app.ViewModel.Authentication.AuthenticationViewModel
-import com.heetox.app.ViewModel.ProductsVM.ProductsViewModel
 import com.heetox.app.ui.theme.HeetoxAppTheme
 import dagger.hilt.android.AndroidEntryPoint
 
@@ -37,14 +35,13 @@ class MainActivity : ComponentActivity() {
         setContent {
 
 
-
             val viewModel : AuthenticationViewModel = hiltViewModel()
             val UserData = viewModel.Localdata.collectAsState()
             val context = LocalContext.current
             val status = viewModel.FetchUserStatus.collectAsState()
 
 
-            var currentUserData = viewModel.GetCurrentUserData.collectAsState()
+            val currentUserData = viewModel.GetCurrentUserData.collectAsState()
             val error = currentUserData.value.error
 
             if(!status.value){
@@ -58,7 +55,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                Log.d("-->", "UserProfileCard: ${status.value} ")
+//                Log.d("-->", "UserProfileCard: ${status.value} ")
 
             }
 

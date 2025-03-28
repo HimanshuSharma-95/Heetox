@@ -16,7 +16,7 @@ data class DayNutritionalValue(
     val total_fats: Double,
     val total_sugar: Double,
     val trans_fats: Double,
-    val unsaturated_fats: Int,
+    val unsaturated_fats: Double,
     val vitamin_A: Double,
     val vitamin_B: Int,
     val vitamin_C: Double,

@@ -163,7 +163,7 @@ fun ProductByBarcodeDetails(Details : ProductbyBarcodeResponse , AuthVM : Authen
 
 
 
-    val ingredientList by rememberSaveable {
+    val ingredientList by remember {
         mutableStateOf(listOf(Details.product_data.ingredients))
     }
 
@@ -550,9 +550,7 @@ Box(
                      val maincategory = Details.product_data.product_category.replace(" ","_")
                      val subcategory = Details.product_data.product_sub_category.replace(" ","_")
 
-                     ProductVM.setSubcategory(subcategory)
-
-                     navController.navigate("productlist/${maincategory}")
+                     navController.navigate("betteralternative/${maincategory}/${subcategory}")
 
                  },
                      colors = ButtonDefaults.buttonColors(
@@ -781,9 +779,6 @@ fun SegmentedControl(
 // nutritional values
 @Composable
 fun Nutrition(data: MutableState<NutritionalValue>) {
-
-
-
 
 
     Row(
@@ -2299,20 +2294,7 @@ data.forEach {
         }
 
     }
-
-
-
-
 }
-
-
-
-
-
-
-
-
-
 
 
 }

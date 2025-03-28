@@ -62,6 +62,7 @@ import com.heetox.app.Screens.AuthenticationScreens.RegisterScreen
 import com.heetox.app.Screens.AuthenticationScreens.updateprofilescreen
 import com.heetox.app.Screens.AuthenticationScreens.verifyemailscreen
 import com.heetox.app.Screens.PostsScreen.Postscreen
+import com.heetox.app.Screens.ProdcutScreens.BetterAlternativesScreen
 import com.heetox.app.Screens.ProdcutScreens.MostScannedScreen
 import com.heetox.app.Screens.ProdcutScreens.ProductDataScreen
 import com.heetox.app.Screens.ProdcutScreens.ProductListScreen
@@ -138,6 +139,7 @@ fun NavbottomandNavGraph(){
 
     Scaffold( bottomBar = {
 
+        //if to not show bottom navbar on these screens
         if(currentDestination?.route == "login" ||
             currentDestination?.route == "register" ||
             currentDestination?.route == "updateprofile" ||
@@ -170,6 +172,8 @@ fun NavbottomandNavGraph(){
                 {
                     items.forEachIndexed { index, item ->
 
+
+                        //for scan icon different design
                         if (index == 2) {
 
 
@@ -285,8 +289,6 @@ fun NavbottomandNavGraph(){
 
     }
 
-
-
 }
 
 
@@ -309,7 +311,6 @@ fun NavGraph(navController: NavHostController, paddingValues: PaddingValues){
 
 
 
-
      NavHost(navController = navController, startDestination = "home",
 
          enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }) + fadeIn(animationSpec = tween(700)) },
@@ -323,9 +324,6 @@ fun NavGraph(navController: NavHostController, paddingValues: PaddingValues){
                 Homescreen(navController,ProductViewModel)
 
             }
-
-
-
 
 
 
@@ -397,41 +395,57 @@ fun NavGraph(navController: NavHostController, paddingValues: PaddingValues){
 
 
          // Define the categorylist nested graph
-         navigation(startDestination = "productlist/{category}", route = "categorylist") {
+         navigation(startDestination = "productlist/{category}/{source}", route = "categorylist") {
              composable(
-                 "productlist/{category}",
+                 "productlist/{category}/{source}",
                  arguments = listOf(
-                     navArgument("category") { type = NavType.StringType }
+                     navArgument("category") { type = NavType.StringType },
+                     navArgument("source") { type = NavType.StringType }
                  )
              ) { backStackEntry ->
                  val category = backStackEntry.arguments?.getString("category") ?: ""
+                 val source = backStackEntry.arguments?.getString("source") ?: "HOME" // Default to "HOME"
 
                  ProductListScreen(
                      category = category,
                      AuthVM = AuthenticationViewModel,
                      ProductVM = ProductViewModel,
-                     navController = navController
+                     navController = navController,
+                     source = source
                  )
              }
          }
 
 
 
+         composable("betteralternative/{category}/{subCategory}",
+             arguments = listOf(
+                 navArgument("category") { type = NavType.StringType },
+                 navArgument("subCategory") { type = NavType.StringType }
+             )
+             ){
 
+                 backStackEntry ->
+             val category = backStackEntry.arguments?.getString("category") ?: ""
+             val subCategory = backStackEntry.arguments?.getString("subCategory") ?: ""
 
-
+             BetterAlternativesScreen(
+                 category = category,
+                 subCategory = subCategory,
+                 AuthVM = AuthenticationViewModel,
+                 ProductVM = ProductViewModel,
+                 navController = navController,
+             )
+         }
 
 
 
 
 
             //profile
-
-
             composable("forgotpassword"){
                 Forgotpasswordscreen(navController = navController)
             }
-
 
 
 
@@ -468,7 +482,6 @@ fun NavGraph(navController: NavHostController, paddingValues: PaddingValues){
                 }
 
             }
-
 
         }
     }

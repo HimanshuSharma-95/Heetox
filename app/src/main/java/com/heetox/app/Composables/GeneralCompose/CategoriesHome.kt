@@ -7,10 +7,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -41,8 +39,6 @@ import com.heetox.app.ui.theme.HeetoxWhite
 import kotlinx.coroutines.delay
 
 
-
-
 @Composable
 fun CategoriesHome(Productviewmodel : ProductsViewModel,navController: NavController){
 
@@ -62,7 +58,7 @@ fun CategoriesHome(Productviewmodel : ProductsViewModel,navController: NavContro
         modifier = Modifier
             .padding(horizontal = 15.dp)
             .fillMaxWidth()
-            .height(110.dp)
+//            .height(110.dp)
             .clip(RoundedCornerShape(20.dp))
             .shadow(50.dp, RoundedCornerShape(20.dp), true, HeetoxDarkGray, HeetoxDarkGray)
             .background(Color.White)
@@ -98,6 +94,7 @@ color = HeetoxDarkGray,
 
                  Image(painter = painterResource(id = R.drawable.loadingcircle), contentDescription = "",
                      modifier = Modifier
+                         .padding(20.dp)
                          .size(30.dp)
                          .rotate(degree.toFloat()),
                  )
@@ -117,6 +114,7 @@ color = HeetoxDarkGray,
 
 
                  Text(text = error,
+                     modifier = Modifier .padding(20.dp),
                      fontSize = 14.sp,
                      color = HeetoxDarkGray,
                      )
@@ -141,6 +139,7 @@ color = HeetoxDarkGray,
 
               modifier = Modifier
                   .padding(10.dp,10.dp,0.dp,20.dp)
+//                  .background(HeetoxDarkGray)
 
           ){
 
@@ -149,7 +148,7 @@ color = HeetoxDarkGray,
                   items(CategoriesList){
                           item ->
 
-                      CategoryItem(item = item,navController)
+                      CategoryItem(item = item,navController,Productviewmodel)
 
                   }
               }
@@ -196,29 +195,33 @@ color = HeetoxDarkGray,
 
 
 @Composable
-fun CategoryItem(item : String,navController: NavController){
+fun CategoryItem(item : String,navController: NavController,productsViewModel: ProductsViewModel){
 
 
     Column(
 modifier = Modifier
     .padding(horizontal = 5.dp)
-    .width(120.dp)
+//    .width(120.dp)
     .clip(RoundedCornerShape(30.dp))
     .background(HeetoxWhite)
     .clickable {
 
-        navController.navigate("productlist/${item}")
+        navController.navigate("productlist/${item}/HOME")
+        productsViewModel.getSubCategory(item)
+        productsViewModel.clearAlternativeProductList()
 
-    },
+    }
+    .padding(horizontal = 20.dp, vertical = 8.dp)
+        ,
         horizontalAlignment = Alignment.CenterHorizontally
-
 
     ){
 
-Text(text = item,
-modifier = Modifier
-    .padding(8.dp),
-    fontSize = 14.sp
+    Text(text = item,
+      modifier = Modifier
+   ,
+    fontSize = 14.sp,
+
 
     )
 

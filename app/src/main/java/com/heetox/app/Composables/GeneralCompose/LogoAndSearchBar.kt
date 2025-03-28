@@ -53,7 +53,7 @@ fun LogoAndSearchBar(
         mutableStateOf(0)
     }
 
-    val itemlist = listOf("Lays","Frooti","Bhujia","Red Bull","Gummies")
+    val itemlist = listOf("Lays","Peanut Butter","Chips","Red Bull","Protein Bars")
 
 
 
