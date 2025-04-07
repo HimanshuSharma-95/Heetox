@@ -3,7 +3,6 @@ package com.heetox.app.Screens.ProdcutScreens
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.util.Log
 import android.util.Size
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -210,7 +209,7 @@ val scrollState = rememberScrollState()
                 imageAnalyzer
             )
         } catch (e: Exception) {
-            Log.e("BarcodeScanner", "Use case binding failed", e)
+//            Log.e("BarcodeScanner", "Use case binding failed", e)
         }
     }
 }
@@ -235,7 +234,7 @@ private fun processImageProxy(
                 }
             }
             .addOnFailureListener { e ->
-                Log.e("BarcodeScanner", "Barcode scanning failed", e)
+//                Log.e("BarcodeScanner", "Barcode scanning failed", e)
             }
             .addOnCompleteListener {
                 imageProxy.close()

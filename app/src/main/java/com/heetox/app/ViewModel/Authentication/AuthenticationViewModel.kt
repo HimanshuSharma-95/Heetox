@@ -20,7 +20,9 @@ import com.heetox.app.Repository.AuthenticationRepository.SharedPreferenceReposi
 import com.heetox.app.Utils.Resource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -28,8 +30,13 @@ import javax.inject.Inject
 @HiltViewModel
 class AuthenticationViewModel @Inject constructor( val AuthRepo : AuthenticationRepository,private val TokenRepo : SharedPreferenceRepository) : ViewModel() {
 
-    val Registeruserdata : StateFlow<Resource<AuthUser>>
-        get() = AuthRepo.accessRegisterUser
+//    val Registeruserdata : StateFlow<Resource<AuthUser>>
+//        get() = AuthRepo.accessRegisterUser
+
+    val _registerUserdata = MutableStateFlow<Resource<AuthUser>>(Resource.Nothing())
+//        get() = AuthRepo.accessRegisterUser
+
+    val registerUserData = _registerUserdata.asStateFlow()
 
     val Loginuserdata : StateFlow<Resource<LoginData>>
         get() = AuthRepo.accessLoginUser
@@ -70,12 +77,16 @@ class AuthenticationViewModel @Inject constructor( val AuthRepo : Authentication
         get() = AuthRepo.accessForgotPasswordData
 
 
+    //changed
     fun registerUser(userData: RegisterSend){
 
-        viewModelScope.launch(Dispatchers.IO){
+        viewModelScope.launch(){
 
-         AuthRepo.Registeruser(userData)
+            _registerUserdata.value = Resource.Loading()
 
+           val response = AuthRepo.registerUser(userData)
+
+            _registerUserdata.value = response
         }
 
     }

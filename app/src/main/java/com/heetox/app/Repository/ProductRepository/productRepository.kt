@@ -1,6 +1,5 @@
 package com.heetox.app.Repository.ProductRepository
 
-import android.util.Log
 import com.google.gson.Gson
 import com.heetox.app.ApiInterface.ProductInterface
 import com.heetox.app.Model.Authentication.ErrorResponse
@@ -156,7 +155,7 @@ class productRepository @Inject constructor(private val ProductApi : ProductInte
         }catch(e:Exception){
 
             MostScannedProductData.emit(Resource.Error("Couldn't load Products"))
-            Log.d("product repo", "getMostScannedProducts: $e ")
+//            Log.d("product repo", "getMostScannedProducts: $e ")
 
 
         }
@@ -195,7 +194,7 @@ class productRepository @Inject constructor(private val ProductApi : ProductInte
         }catch (e : Exception){
 
             CategoriesData.emit(Resource.Error("Couldn't Load Categories"))
-            Log.d("product repo ", "getCategories: $e ")
+//            Log.d("product repo ", "getCategories: $e ")
 
         }
 
@@ -213,7 +212,7 @@ class productRepository @Inject constructor(private val ProductApi : ProductInte
 
             val response = ProductApi.getProductByBarcode(barcode, Authorization)
 
-            Log.d("product repo", "barco ${response.body().toString()}")
+//            Log.d("product repo", "barco ${response.body().toString()}")
 
             if(response.body()!= null && response.body()!!.success){
 
@@ -228,7 +227,7 @@ class productRepository @Inject constructor(private val ProductApi : ProductInte
 
                    ProductbyBarcodeData.emit(Resource.Error(errorResponse.message))
 
-                Log.d("product repo", "barco ${errorResponse.message}")
+//                Log.d("product repo", "barco ${errorResponse.message}")
 
 
             }
@@ -236,7 +235,7 @@ class productRepository @Inject constructor(private val ProductApi : ProductInte
         }catch (e:Exception){
 
             ProductbyBarcodeData.emit(Resource.Error("Sorry! couldn't load this product"))
-            Log.d("product repo ", "getProductByBarcode: $e")
+//            Log.d("product repo ", "getProductByBarcode: $e")
 
 
         }
@@ -279,7 +278,7 @@ class productRepository @Inject constructor(private val ProductApi : ProductInte
 
             LikeUnlikeProductData.emit(Resource.Error("Couldn't Like Product"))
 
-            Log.d("Product repo ", "LikeUnlikeProduct: $e")
+//            Log.d("Product repo ", "LikeUnlikeProduct: $e")
 
         }
 
@@ -302,11 +301,11 @@ class productRepository @Inject constructor(private val ProductApi : ProductInte
 
         try{
 
-            Log.d("product repo", "getAlternativeProducts: Heya ")
+//            Log.d("product repo", "getAlternativeProducts: Heya ")
 
             val response = ProductApi.getAlternateProducts(category,Authorization)
 
-            Log.d("product repo", "getAlternativeProducts: fof ${response.body().toString()}")
+//            Log.d("product repo", "getAlternativeProducts: fof ${response.body().toString()}")
 
             if(response.body()!= null && response.body()!!.success){
 
@@ -328,7 +327,7 @@ class productRepository @Inject constructor(private val ProductApi : ProductInte
         }catch (e : Exception){
 
             AlternateProductData.emit(Resource.Error("Couldn't Load Products oops"))
-            Log.d("product repo", "getAlternativeProducts: $e")
+//            Log.d("product repo", "getAlternativeProducts: $e")
 
         }
 
@@ -367,7 +366,7 @@ try {
 
 }catch (e : Exception){
 
-    Log.d("product repo", "getSearch: $e")
+//    Log.d("product repo", "getSearch: $e")
 
     SearchData.emit(Resource.Error("Couldn't Load Products oops"))
 
@@ -411,7 +410,7 @@ try {
         }catch (e : Exception){
 
             CheckBarcodeData.emit(Resource.Error("Couldn't Load Products oops"))
-            Log.d("product repo", "Checkbarcode: $e")
+//            Log.d("product repo", "Checkbarcode: $e")
 
         }
 
@@ -450,7 +449,7 @@ try {
 
             getLikedProductData.emit(Resource.Error("Couldn't Load Products oops!"))
 
-            Log.d("product repo", "getLikedProducts: $e")
+//            Log.d("product repo", "getLikedProducts: $e")
 
         }
 
@@ -494,7 +493,7 @@ try {
 
             ConsumeProduct.emit(Resource.Error("Oops! Try Again"))
 
-            Log.d("product repo", "Consume Product: $e")
+//            Log.d("product repo", "Consume Product: $e")
         }
 
 
@@ -533,7 +532,7 @@ try {
 
             ConsumedWeekData.emit(Resource.Error("Oops! Try Again"))
 
-            Log.d("product repo", "Consume Week Data Product: $e")
+//            Log.d("product repo", "Consume Week Data Product: $e")
 
 
         }
@@ -576,7 +575,7 @@ try {
         }catch (e : Exception){
 
             ConsumedDayData.emit(Resource.Error("Oops! Try Again"))
-            Log.d("product repo", "Consume Product: $e")
+//            Log.d("product repo", "Consume Product: $e")
 
         }
 
@@ -615,7 +614,7 @@ try {
         }catch (e:Exception){
 
             DeleteConsumedProduct.emit(Resource.Error("Oops! Try Again"))
-            Log.d("product repo", "Delete Product: $e")
+//            Log.d("product repo", "Delete Product: $e")
 
         }
 
@@ -653,7 +652,7 @@ try {
         }catch (e:Exception){
 
             ConsumedMonthData.emit(Resource.Error("Oops! Try Again"))
-            Log.d("product repo", "Month Data: $e")
+//            Log.d("product repo", "Month Data: $e")
 
         }
 
@@ -688,7 +687,7 @@ try {
         }catch (e:Exception){
 
             SubCategoryData.emit(Resource.Error("Oops! Try Again"))
-            Log.d("product repo", "sub categories: $e")
+//            Log.d("product repo", "sub categories: $e")
 
         }
 

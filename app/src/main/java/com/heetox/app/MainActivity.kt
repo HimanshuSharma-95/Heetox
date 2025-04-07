@@ -1,11 +1,13 @@
 package com.heetox.app
 
 
+import android.os.Build
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -33,7 +35,6 @@ class MainActivity : ComponentActivity() {
 
 
         setContent {
-
 
             val viewModel : AuthenticationViewModel = hiltViewModel()
             val UserData = viewModel.Localdata.collectAsState()
@@ -87,7 +88,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
 
 
 

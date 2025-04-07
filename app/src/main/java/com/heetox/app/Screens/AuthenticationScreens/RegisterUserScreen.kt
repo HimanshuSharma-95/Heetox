@@ -54,9 +54,11 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.heetox.app.Composables.AuthCompose.BaseHeading
+import com.heetox.app.Composables.AuthCompose.DatePickerModal
 import com.heetox.app.Composables.AuthCompose.Input
 import com.heetox.app.Composables.AuthCompose.LoadingOverlay
 import com.heetox.app.Composables.AuthCompose.PasswordInput
+import com.heetox.app.Composables.AuthCompose.formatDate
 import com.heetox.app.Model.Authentication.AuthUser
 import com.heetox.app.Model.Authentication.LoginData
 import com.heetox.app.Model.Authentication.LoginSend
@@ -98,7 +100,7 @@ fun RegisterInputs(navController: NavHostController){
     val viewmodel : AuthenticationViewModel = hiltViewModel()
 
     //register
-    val data : State<Resource<AuthUser>> = viewmodel.Registeruserdata.collectAsState()
+    val data : State<Resource<AuthUser>> = viewmodel.registerUserData.collectAsState()
 
     //login
     val datalogin : State<Resource<LoginData>> = viewmodel.Loginuserdata.collectAsState()
@@ -113,19 +115,12 @@ fun RegisterInputs(navController: NavHostController){
     var password by rememberSaveable { mutableStateOf("") }
     var error by rememberSaveable { mutableStateOf("") }
     var loading by rememberSaveable { mutableStateOf(false) }
+
+    var showDatePicker by rememberSaveable { mutableStateOf(false) }
+
     val genderoptions = listOf("male","female","other")
     var isgenderexpanded by rememberSaveable { mutableStateOf(false) }
 
-
-    //for datepicker
-//    val calendar = Calendar.getInstance()
-//
-//    // Extract current date
-//    val year = calendar.get(Calendar.YEAR)
-//    val month = calendar.get(Calendar.MONTH)
-//    val day = calendar.get(Calendar.DAY_OF_MONTH)
-//    // State to show/hide DatePickerDialog
-//    var showDatePicker by remember { mutableStateOf(false) }
 
     if(loading){
 
@@ -232,11 +227,54 @@ fun RegisterInputs(navController: NavHostController){
 
 
 
-                    Input("D0B YYYY-MM-DD", dob, { dob = it.trimEnd() },KeyboardOptions.Default.copy(imeAction = ImeAction.Next) )
+//                    Input("D0B YYYY-MM-DD", dob, { dob = it.trimEnd() },KeyboardOptions.Default.copy(imeAction = ImeAction.Next) )
 
 
-               
-                       OutlinedTextField(
+                    OutlinedTextField(
+                        value = dob,
+                        onValueChange = { },
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp, vertical = 2.dp)
+                            .width(300.dp)
+                            .clickable { showDatePicker = true },
+                        keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
+                        readOnly = true,
+                        visualTransformation = VisualTransformation.None,
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedTextColor = Color.Black,
+                            unfocusedLabelColor = HeetoxDarkGray,
+                            unfocusedBorderColor = Color.Black,
+                            disabledBorderColor = MaterialTheme.colorScheme.outline,
+                            disabledPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                            disabledLabelColor = HeetoxDarkGray,
+                            disabledTextColor = MaterialTheme.colorScheme.onSurface,
+                        ),
+                        label = { Text(text = "DOB") },
+                        enabled = false
+
+                    )
+
+
+
+                    if (showDatePicker) {
+                        DatePickerModal(
+                            onDateSelected = { selectedDateMillis ->
+                                selectedDateMillis?.let {
+                                    dob = formatDate(it) // Format to YYYY-MM-DD
+                                    println("Date Selected: $dob") // Debug Log
+                                }
+                                showDatePicker = false
+                            },
+                            onDismiss = {
+                                println("DatePicker Dismissed") // Debug Log
+                                showDatePicker = false
+                            }
+                        )
+                    }
+
+
+
+                    OutlinedTextField(
                            value = gender,
                            onValueChange = { gender = it },
                            modifier = Modifier
@@ -327,9 +365,7 @@ Column(
                                     phone,
                                     gender
                                 ))
-
                         }
-
                     } ,
                         modifier = Modifier
                             .padding(50.dp)

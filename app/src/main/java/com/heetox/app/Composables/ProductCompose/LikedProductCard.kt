@@ -1,5 +1,6 @@
 package com.heetox.app.Composables.ProductCompose
 
+import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -66,7 +67,6 @@ fun LazyLikedProduct(authorization : String,ProductVM: ProductsViewModel,navCont
     var error by rememberSaveable {
         mutableStateOf("")
     }
-
 
 
     LaunchedEffect(key1 = Unit) {

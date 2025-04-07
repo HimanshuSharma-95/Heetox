@@ -91,7 +91,6 @@ fun ProductByBarcodeDetails(Details : ProductbyBarcodeResponse , AuthVM : Authen
     val context = LocalContext.current
 
 
-
     var imageList by rememberSaveable {
 
         mutableStateOf(listOf<String>())
@@ -2333,7 +2332,6 @@ fun AlternativeList(ProductVM: ProductsViewModel, token : String, UserData : Sta
 
             datalist?.get(0)?.let { ProductVM.getalternativeproducts(it.product_category, token) }
 
-            Log.d("-->", "AlternativeList: jkbjbjkb")
 
         }
 

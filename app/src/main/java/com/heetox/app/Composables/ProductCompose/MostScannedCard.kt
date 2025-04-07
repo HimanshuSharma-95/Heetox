@@ -79,7 +79,6 @@ fun MostScannedProductsSix(navController : NavHostController,ProductVM : Product
 
 
 
-
     Column(
         modifier = Modifier
             .fillMaxWidth()

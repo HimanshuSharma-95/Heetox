@@ -1,6 +1,5 @@
 package com.heetox.app.Composables.AuthCompose
 
-import android.util.Log
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -132,10 +131,10 @@ fun UserProfileCard(
                         .transformations(CircleCropTransformation())
                         .listener(
                             onError = { request, throwable ->
-                                Log.e(
-                                    "Profile Image",
-                                    "Error loading image: ${request.data} , $throwable"
-                                )
+//                                Log.e(
+//                                    "Profile Image",
+//                                    "Error loading image: ${request.data} , $throwable"
+//                                )
                             }
                         )
                         .build()

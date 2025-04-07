@@ -1,7 +1,6 @@
 package com.heetox.app.Screens.ProdcutScreens
 
 import android.annotation.SuppressLint
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -47,7 +46,6 @@ import com.heetox.app.ui.theme.HeetoxDarkGray
 import com.heetox.app.ui.theme.HeetoxWhite
 
 
-
 //screen of home screen categories products
 @SuppressLint("MutableCollectionMutableState")
 @Composable
@@ -79,7 +77,6 @@ fun ProductListScreen(
     var subCategoryLoading by rememberSaveable {
         mutableStateOf(true)
     }
-
 
 
     val allProduct = ProductVM.AlternativeProductData.collectAsState()
@@ -116,7 +113,7 @@ fun ProductListScreen(
                     currentSubCategory = subCategoriesList[0]
 
                 }
-                Log.e("1 --->", "ProductListScreen: ${currentSubCategory} ${subCategoriesList} ", )
+//                Log.e("1 --->", "ProductListScreen: ${currentSubCategory} ${subCategoriesList} ", )
 
 
             }
@@ -154,7 +151,7 @@ fun ProductListScreen(
                 dataListError = ""
                 dataList = allProduct.value.data
                 dataListLoading = false
-                Log.e("2 --->", "ProductListScreen: ${dataList} ", )
+//                Log.e("2 --->", "ProductListScreen: ${dataList} ", )
             }
         }
     }

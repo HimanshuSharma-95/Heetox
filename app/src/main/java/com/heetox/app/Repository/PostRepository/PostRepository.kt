@@ -1,6 +1,5 @@
 package com.heetox.app.Repository.PostRepository
 
-import android.util.Log
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
@@ -63,7 +62,7 @@ class PostRepository @Inject constructor(
         }catch (e:Exception){
             
             postlikedislikeresponse.emit(Resource.Error("Something went wrong"))
-            Log.d("post repo", "postLikeDislike: $e")
+//            Log.d("post repo", "postLikeDislike: $e")
             
         }
         
@@ -93,7 +92,7 @@ class PostRepository @Inject constructor(
         }catch (e:Exception){
 
             boommarkresponse.emit(Resource.Error("Something went wrong"))
-            Log.d("post repo", "bookmark post : $e")
+//            Log.d("post repo", "bookmark post : $e")
 
         }
 

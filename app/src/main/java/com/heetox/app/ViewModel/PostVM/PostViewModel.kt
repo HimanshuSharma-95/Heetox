@@ -146,8 +146,6 @@ class PostsViewModel @Inject constructor(
 
 
 
-
-
 }
 
 data class PostState(

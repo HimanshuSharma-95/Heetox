@@ -140,6 +140,7 @@ fun ConsumedProductScreen(navController: NavHostController,ProductVM : ProductsV
 
             tempdates.add(item.date)
 
+//            Log.d("item", "ConsumedProductScreen: ${ConsumedWeekData.value.data?.weekData}")
             if(item.products.isNotEmpty()){
 
                 weekcalories[index] = (item.per_day_NutritionalValue.energy * 0.239).toInt()
@@ -165,7 +166,7 @@ fun ConsumedProductScreen(navController: NavHostController,ProductVM : ProductsV
 
         }
 
-        Log.d("date", "ConsumedProductScreen: $formattedDate")
+//        Log.d("date", "ConsumedProductScreen: $formattedDate")
 
     }
 
@@ -234,7 +235,7 @@ if(!isConnected){
            }
 
 
-
+           Log.d("jkn", "CategoriesHome: ")
 
 
 
@@ -498,7 +499,7 @@ if(!isConnected){
 //                )
 
 
-                   Log.d("kcal", "ConsumedProductScreen: $weekcalories ")
+//                   Log.d("kcal", "ConsumedProductScreen: $weekcalories ")
 
 
 
