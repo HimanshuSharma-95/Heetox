@@ -5,7 +5,6 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.util.Size
 import android.widget.Toast
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.OptIn
@@ -56,25 +55,29 @@ import androidx.navigation.NavController
 import com.google.mlkit.vision.barcode.BarcodeScanner
 import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.common.InputImage
+import com.heetox.app.Model.Product.CheckBarcodeResponse
 import com.heetox.app.R
 import com.heetox.app.Utils.Resource
+import com.heetox.app.Utils.UiEvent
 import com.heetox.app.ViewModel.ProductsVM.ProductsViewModel
 import com.heetox.app.ui.theme.HeetoxDarkGreen
 import com.heetox.app.ui.theme.HeetoxGreen
 import com.heetox.app.ui.theme.HeetoxWhite
+import kotlinx.coroutines.flow.Flow
 
 
 @Composable
-fun Scanscreen(navController: NavController) {
+fun ScanScreen(navController: NavController) {
 
-    val productVM: ProductsViewModel = hiltViewModel()
 
-    BackHandler {
-        navController.navigate("home") {
-            popUpTo("scan") { inclusive = true }
-        }
-    }
+//    BackHandler {
+//        navController.navigate("home") {
+//            popUpTo("scan") { inclusive = true }
+//        }
+//    }
 
+    val productVM : ProductsViewModel = hiltViewModel()
+    val checkBarcodeResponseData = productVM.checkBarcode.collectAsState().value
 
     val context = LocalContext.current
 
@@ -102,7 +105,12 @@ fun Scanscreen(navController: NavController) {
     }
 
     if (hasCameraPermission) {
-        SearchProductScreen(productViewModel = productVM, authToken = "", navController = navController)
+        SearchProductScreen(
+            navController = navController,
+            checkBarcode = {productVM.checkBarcode(it)},
+            checkBarcodeResponse = checkBarcodeResponseData,
+            uiEvent = productVM.uiEvent
+        )
     } else {
         LaunchedEffect(Unit) {
             Toast.makeText(context, "Waiting for camera permission...", Toast.LENGTH_SHORT).show()
@@ -252,13 +260,12 @@ private fun processImageProxy(
 
 @Composable
 fun SearchProductScreen(
-    productViewModel: ProductsViewModel,
-    authToken: String,
-    navController: NavController
+    checkBarcode:(String)->Unit,
+    checkBarcodeResponse:Resource<CheckBarcodeResponse>,
+    navController: NavController,
+    uiEvent: Flow<UiEvent>
 ) {
     val context = LocalContext.current
-    val productResponse by productViewModel.checkbarcode.collectAsState()
-
 
 
     var previousScannedBarcode by rememberSaveable { mutableStateOf("") }
@@ -270,16 +277,57 @@ fun SearchProductScreen(
             scannedBarcode = barcode
             isLoading = true
 
-            productViewModel.checkbarcode(barcode)
+            checkBarcode(barcode)
 
         }
     })
 
 
+//    LaunchedEffect(Unit) {
+//        uiEvent.collect { event ->
+//            when (event) {
+//                is UiEvent.Loading -> {
+//                    if (event.action == Action.CheckBarcode) {
+//                        isLoading = true
+//                    }
+//                }
+//
+//                is UiEvent.Error -> {
+//                    if (event.action == Action.CheckBarcode) {
+//                        isLoading = false
+//                        Toast.makeText(context, "Product Not Found", Toast.LENGTH_SHORT).show()
+//                    }
+//                }
+//
+//                is UiEvent.Success -> {
+//                    if (event.action == Action.CheckBarcode) {
+//                        isLoading = false
+//
+//                        if (scannedBarcode != previousScannedBarcode) {
+//                            previousScannedBarcode = scannedBarcode
+//
+//                            val productData = checkBarcodeResponse.data
+//
+//                            if (productData?.product_data == true) {
+//                                navController.navigate("productdetails/$scannedBarcode") {
+//                                    popUpTo("scan") { inclusive = false }
+//                                }
+//                            } else {
+//                                Toast.makeText(context, "Product Not Found", Toast.LENGTH_SHORT).show()
+//                            }
+//                        }
+//                    }
+//                }
+//
+//                UiEvent.Idle -> Unit
+//            }
+//        }
+//    }
 
-    LaunchedEffect(scannedBarcode, productResponse) {
 
-        when (productResponse) {
+    LaunchedEffect(scannedBarcode, checkBarcodeResponse) {
+
+        when (checkBarcodeResponse) {
 
             is Resource.Error -> {
                 isLoading = false
@@ -298,7 +346,7 @@ fun SearchProductScreen(
                 if (scannedBarcode != previousScannedBarcode) {
                     previousScannedBarcode = scannedBarcode
 
-                    if (productResponse.data?.product_data == true) {
+                    if (checkBarcodeResponse.data?.product_data == true) {
 
                         navController.navigate("productdetails/$scannedBarcode")
                         {

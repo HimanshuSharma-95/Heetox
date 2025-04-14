@@ -47,15 +47,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.heetox.app.Composables.ProductCompose.SegmentedControl
 import com.heetox.app.Di.checkInternetConnection
+import com.heetox.app.Model.Authentication.LocalStoredData
 import com.heetox.app.Model.Product.CalorieData
 import com.heetox.app.Model.Product.ProductsData
-import com.heetox.app.Utils.Resource
-import com.heetox.app.ViewModel.Authentication.AuthenticationViewModel
-import com.heetox.app.ViewModel.ProductsVM.ProductsViewModel
+import com.heetox.app.Utils.Action
+import com.heetox.app.Utils.UiEvent
+import com.heetox.app.ViewModel.ProductsVM.ConsumeViewModel
 import com.heetox.app.ui.theme.HeetoxDarkGray
 import com.heetox.app.ui.theme.HeetoxDarkGreen
 import com.heetox.app.ui.theme.HeetoxLightGray
@@ -67,37 +69,37 @@ import java.time.format.DateTimeFormatter
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun ConsumedProductScreen(navController: NavHostController,ProductVM : ProductsViewModel,AuthVM:AuthenticationViewModel) {
+fun ConsumedProductScreen(navController: NavHostController,userData: LocalStoredData?){
 
+    val consumedVM : ConsumeViewModel = hiltViewModel()
 
-    val ConsumedWeekData = ProductVM.ConsumedWeekData.collectAsState()
-    val ConsumedDayData = ProductVM.ConsumedDayData.collectAsState()
-    val ConsumedMonthData = ProductVM.ConsumedMonthData.collectAsState()
-    val DeleteConsumeData = ProductVM.DeleteConsumedProductData.collectAsState()
+    val consumedWeekData = consumedVM.consumedWeekData.collectAsState()
+    val consumedDayData = consumedVM.consumedDayData.collectAsState()
+    val consumedMonthData = consumedVM.consumedMonthData.collectAsState()
+    val deleteConsumeData = consumedVM.deleteConsumedProductData.collectAsState()
 
-    val UserData = AuthVM.Localdata.collectAsState()
-    val token = UserData.value?.Token
+    val token = userData?.Token
 
     val currentDate: LocalDate = LocalDate.now()
     val formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy")
     val formattedDate: String = currentDate.format(formatter)
 
-    val MWD = listOf("Month", "Week", "Day")
-    var MWDselectedIndex by rememberSaveable {
+    val mWD = listOf("Month", "Week", "Day")
+    var mWDSelectedIndex by rememberSaveable {
         mutableIntStateOf(2)
     }
 
-    val Days = listOf("sun", "mon", "tue", "wed", "thu", "fri", "sat")
-    var DaysselectedIndex by rememberSaveable {
+    val days = listOf("sun", "mon", "tue", "wed", "thu", "fri", "sat")
+    var daysSelectedIndex by rememberSaveable {
         mutableIntStateOf(0)
     }
 
 
-    var SelectedWeek by rememberSaveable {
+    var selectedWeek by rememberSaveable {
         mutableStateOf("currentweek")
     }
 
-    var Dates by rememberSaveable { mutableStateOf(listOf<String>()) }
+    var dates by rememberSaveable { mutableStateOf(listOf<String>()) }
 
 
     var loading by rememberSaveable {
@@ -108,90 +110,141 @@ fun ConsumedProductScreen(navController: NavHostController,ProductVM : ProductsV
         mutableStateOf("")
     }
 
-    var scrollState = rememberScrollState()
+    val scrollState = rememberScrollState()
 
-    var weekcalories by rememberSaveable {
+    var weekCalories by rememberSaveable { mutableStateOf(List(7) { 0 }) }
 
-        mutableStateOf(mutableListOf(0,0,0,0,0,0,0))
+    var updateDayIndexOnWeekLoad by rememberSaveable { mutableStateOf<Int?>(null) }
 
-    }
-
-
-
-    //get week data
-    LaunchedEffect(key1 = ConsumedWeekData) {
-
-
-        if (token != null) {
-            ProductVM.getConsumedWeekData(token, "currentweek")
+   // On first launch, fetch week data
+    LaunchedEffect(Unit) {
+        token?.let {
+            consumedVM.getConsumedWeekData(it, "currentweek")
         }
-
-
     }
 
+// After week data is loaded, populate dates
+    LaunchedEffect(consumedWeekData.value.data?.weekData) {
+        consumedWeekData.value.data?.weekData?.let { weekList ->
+            val tempDates = weekList.map { it.date }
 
-
-// set dates in days list
-    LaunchedEffect(key1 = ConsumedWeekData.value.data?.weekData) {
-
-        val tempdates = mutableListOf<String>()
-
-        ConsumedWeekData.value.data?.weekData?.forEachIndexed { index,item->
-
-            tempdates.add(item.date)
-
-//            Log.d("item", "ConsumedProductScreen: ${ConsumedWeekData.value.data?.weekData}")
-            if(item.products.isNotEmpty()){
-
-                weekcalories[index] = (item.per_day_NutritionalValue.energy * 0.239).toInt()
-
-            }else{
-                weekcalories[index] = 0
+            // update calories
+            val updatedCalories = weekList.mapIndexed { index, item ->
+                if (item.products.isNotEmpty()) {
+                    (item.per_day_NutritionalValue.energy * 0.239).toInt()
+                } else 0
             }
 
+            weekCalories = updatedCalories
+            dates = tempDates
 
-        }
+//            // auto-select current day if matched
+//            dates.forEach {
+//                    item -> if (item == formattedDate) {
+//                    daysSelectedIndex = dates.indexOf(item)
+//                }
+//            }
 
-        Dates = tempdates
-
-        Dates.forEach {
-
-                item ->
-
-            if (item == formattedDate) {
-
-                DaysselectedIndex = Dates.indexOf(item)
-
-            }
-
-        }
-
-//        Log.d("date", "ConsumedProductScreen: $formattedDate")
-
-    }
-
-
-
-
-    //get data of particular day
-    if (Dates.isNotEmpty()) {
-
-        LaunchedEffect(key1 = DaysselectedIndex) {
-
-
-            if (Dates.isNotEmpty()){
-
-                if (token != null) {
-                    ProductVM.getConsumedDayData(
-                        token,
-                        Dates[DaysselectedIndex]
-                    )
+            updateDayIndexOnWeekLoad?.let { index ->
+                daysSelectedIndex = index
+                updateDayIndexOnWeekLoad = null
+            } ?: run {
+                val index = tempDates.indexOf(formattedDate)
+                if (index != -1) {
+                    daysSelectedIndex = index
                 }
-
             }
-
         }
     }
+
+// Once the selected day is valid, fetch day data
+    LaunchedEffect(dates, daysSelectedIndex) {
+        if (dates.isNotEmpty() && daysSelectedIndex in dates.indices) {
+            token?.let {
+                consumedVM.getConsumedDayData(it, dates[daysSelectedIndex])
+            }
+        }
+    }
+
+//
+//    //get week data
+//    LaunchedEffect(key1 = Unit) {
+//
+//
+//        if (token != null) {
+//            consumedVM.getConsumedWeekData(token, "currentweek")
+//        }
+//
+//
+//    }
+//
+//
+//
+//// set dates in days list
+//    LaunchedEffect(key1 = consumedWeekData.value.data?.weekData) {
+//
+//        val tempDates = mutableListOf<String>()
+//
+//        consumedWeekData.value.data?.weekData?.forEachIndexed { index, item->
+//
+//            tempDates.add(item.date)
+//
+//            Log.d("item", "ConsumedProductScreen: ${consumedWeekData.value.data?.weekData}")
+//
+//            if(item.products.isNotEmpty()){
+//
+//                weekCalories[index] = (item.per_day_NutritionalValue.energy * 0.239).toInt()
+//
+//            }else{
+//                weekCalories[index] = 0
+//            }
+//
+//
+//        }
+//
+//        dates = tempDates
+//
+//        dates.forEach {
+//
+//                item ->
+//
+//            if (item == formattedDate) {
+//
+//                daysSelectedIndex = dates.indexOf(item)
+//
+//            }
+//
+//        }
+//
+//
+//        Log.d("dates -->", "ConsumedProductScreen: ${dates}")
+//
+//
+//    }
+//
+//
+//
+//
+//    //get data of particular day
+//    if (dates.isNotEmpty()) {
+//
+//        LaunchedEffect(key1 = dates[daysSelectedIndex]) {
+//
+//                    Log.d("date", "ConsumedProductScreen: ${dates[daysSelectedIndex]}")
+//
+//            if (dates.isNotEmpty()){
+//
+//                if (token != null) {
+//                    consumedVM.getConsumedDayData(
+//                        token,
+//                        dates[daysSelectedIndex]
+//                    )
+//                }
+//
+//            }
+//
+//        }
+//    }
 
 
 
@@ -223,9 +276,9 @@ if(!isConnected){
 
                ) {
                SegmentedControl(
-                   options = MWD,
-                   selectedIndex = MWDselectedIndex,
-                   onOptionSelected = { MWDselectedIndex = it },
+                   options = mWD,
+                   selectedIndex = mWDSelectedIndex,
+                   onOptionSelected = { mWDSelectedIndex = it },
                    bgcolor = Color.White,
                    selectedColor = HeetoxDarkGreen,
                    selectedTextcolour = HeetoxWhite,
@@ -235,7 +288,7 @@ if(!isConnected){
            }
 
 
-           Log.d("jkn", "CategoriesHome: ")
+//           Log.d("jkn", "CategoriesHome: ")
 
 
 
@@ -244,40 +297,69 @@ if(!isConnected){
 
 
 //days Data
-           if (MWDselectedIndex == 2) {
+           if (mWDSelectedIndex == 2) {
 
+
+               LaunchedEffect(Unit) {
+                   consumedVM.uiEvent.collect { event ->
+                       when (event) {
+                           is UiEvent.Loading -> {
+                               if (event.action == Action.GetConsumedDayData) {
+                                   loading = true
+                                   error = ""
+                               }
+                           }
+
+                           is UiEvent.Error -> {
+                               if (event.action == Action.GetConsumedDayData) {
+                                   loading = false
+                                   error = "Oops! Something went wrong"
+                               }
+                           }
+
+                           is UiEvent.Success -> {
+                               if (event.action == Action.GetConsumedDayData) {
+                                   loading = false
+                                   error = ""
+                               }
+                           }
+
+                           UiEvent.Idle -> Unit
+                       }
+                   }
+               }
 
 
                //  day data resources
-               LaunchedEffect(key1 = ConsumedDayData.value) {
-
-                   when (ConsumedDayData.value) {
-                       is Resource.Error -> {
-                           loading = false
-                           error = "oops! something went wrong"
-                       }
-
-                       is Resource.Loading -> {
-
-                           error = ""
-                           loading = true
-                       }
-
-                       is Resource.Nothing -> {
-                           error = ""
-                           loading = false
-
-                       }
-
-                       is Resource.Success -> {
-
-                           error = ""
-                           loading = false
-
-                       }
-                   }
-
-               }
+//               LaunchedEffect(key1 = consumedDayData.value) {
+//
+//                   when (consumedDayData.value) {
+//                       is Resource.Error -> {
+//                           loading = false
+//                           error = "oops! something went wrong"
+//                       }
+//
+//                       is Resource.Loading -> {
+//
+//                           error = ""
+//                           loading = true
+//                       }
+//
+//                       is Resource.Nothing -> {
+//                           error = ""
+//                           loading = false
+//
+//                       }
+//
+//                       is Resource.Success -> {
+//
+//                           error = ""
+//                           loading = false
+//
+//                       }
+//                   }
+//
+//               }
 
 
 
@@ -306,21 +388,20 @@ if(!isConnected){
                                .width(80.dp)
                        ) {
 
-                           if (ConsumedWeekData.value.data?.weekDatacondition?.hasPreviousWeek == true) {
+                           if (consumedWeekData.value.data?.weekDatacondition?.hasPreviousWeek == true) {
 
                                Button(
                                    onClick = {
 
-                                       if (token != null) {
-                                           ProductVM.getConsumedWeekData(
-                                               token,
-                                               ConsumedWeekData.value.data!!.weekDatacondition.previousWeek
-                                           )
+                                       val previousWeek = consumedWeekData.value.data?.weekDatacondition?.previousWeek
 
-                                           SelectedWeek = ConsumedWeekData.value.data!!.weekDatacondition.previousWeek
+                                       if (token != null && !previousWeek.isNullOrBlank()) {
+                                           consumedVM.getConsumedWeekData(token, previousWeek)
+                                           selectedWeek = previousWeek
                                        }
 
-                                       DaysselectedIndex = 6
+                                       updateDayIndexOnWeekLoad = 6
+//                                       daysSelectedIndex = 6
 
                                    },
                                    colors = ButtonDefaults.buttonColors(
@@ -347,7 +428,7 @@ if(!isConnected){
                        ) {
 
                            Text(
-                               text = ConsumedWeekData.value.data?.date_range ?: "Start - End Date",
+                               text = consumedWeekData.value.data?.date_range ?: "Start - End Date",
                                fontSize = 16.sp,
                                color = HeetoxDarkGray,
                                modifier = Modifier
@@ -363,21 +444,19 @@ if(!isConnected){
                                .width(80.dp)
                        ){
 
-                           if (ConsumedWeekData.value.data?.weekDatacondition?.hasNextWeek == true) {
+                           if (consumedWeekData.value.data?.weekDatacondition?.hasNextWeek == true) {
 
                                Button(
                                    onClick = {
 
-                                       if (token != null) {
-                                           ProductVM.getConsumedWeekData(
-                                               token,
-                                               ConsumedWeekData.value.data!!.weekDatacondition.nextWeek
-                                           )
+                                       val nextWeek = consumedWeekData.value.data?.weekDatacondition?.nextWeek
 
-                                           SelectedWeek = ConsumedWeekData.value.data!!.weekDatacondition.nextWeek
+                                       if (token != null && !nextWeek.isNullOrBlank()) {
+                                           consumedVM.getConsumedWeekData(token, nextWeek)
+                                           selectedWeek = nextWeek
                                        }
 
-                                       DaysselectedIndex = 0
+                                       updateDayIndexOnWeekLoad = 0
 
                                    },
                                    colors = ButtonDefaults.buttonColors(
@@ -422,10 +501,10 @@ if(!isConnected){
                        )
 
 
-                       if(Dates.size > 0){
+                       if(dates.size > 0){
                            Text(
 
-                               text = " - ${Dates[DaysselectedIndex]}",
+                               text = " - ${dates[daysSelectedIndex]}",
                                fontSize = 18.sp,
                                color = HeetoxDarkGray,
                                fontWeight = FontWeight.Bold,
@@ -450,7 +529,7 @@ if(!isConnected){
                    ){
 
                        Text(text = "${
-                           ConsumedDayData.value.data?.totalNutritionalValue?.energy?.times(
+                           consumedDayData.value.data?.totalNutritionalValue?.energy?.times(
                                0.239
                            )?.toInt() ?: "Calories"
                        }",
@@ -462,7 +541,7 @@ if(!isConnected){
 
                        )
 
-                       if(ConsumedDayData.value.data?.totalNutritionalValue?.energy != null){
+                       if(consumedDayData.value.data?.totalNutritionalValue?.energy != null){
                            Text(text = " Kcal",
                                color = HeetoxDarkGreen,
                                fontSize = 25.sp,
@@ -479,41 +558,28 @@ if(!isConnected){
 
 
                    val calorieDataList = listOf(
-                       CalorieData("Sun", weekcalories[0]),
-                       CalorieData("Mon", weekcalories[1]),
-                       CalorieData("Tue", weekcalories[2]),
-                       CalorieData("Wed", weekcalories[3]),
-                       CalorieData("Thu", weekcalories[4]),
-                       CalorieData("Fri", weekcalories[5]),
-                       CalorieData("Sat", weekcalories[6])
+                       CalorieData("Sun", weekCalories[0]),
+                       CalorieData("Mon", weekCalories[1]),
+                       CalorieData("Tue", weekCalories[2]),
+                       CalorieData("Wed", weekCalories[3]),
+                       CalorieData("Thu", weekCalories[4]),
+                       CalorieData("Fri", weekCalories[5]),
+                       CalorieData("Sat", weekCalories[6])
                    )
 
-//                val calorieDataList = listOf(
-//                    CalorieData("Sun",0),
-//                    CalorieData("Mon", 0),
-//                    CalorieData("Tue",0),
-//                    CalorieData("Wed", 0),
-//                    CalorieData("Thu", weekcalories[4]),
-//                    CalorieData("Fri", weekcalories[5]),
-//                    CalorieData("Sat", weekcalories[6])
-//                )
+                   Log.e("---->", "ConsumedProductScreen: ${weekCalories} ", )
+                   Log.e("---->", "ConsumedProductScreen: ${calorieDataList} ", )
 
-
-//                   Log.d("kcal", "ConsumedProductScreen: $weekcalories ")
-
-
-
-
-                   VerticalCalorieBarChart(calorieData = calorieDataList,DaysselectedIndex){
-                       DaysselectedIndex = it
+                   VerticalCalorieBarChart(calorieData = calorieDataList,daysSelectedIndex){
+                       daysSelectedIndex = it
                    }
 
 
                    //segmented days
                    SegmentedControl(
-                       options = Days,
-                       selectedIndex = DaysselectedIndex,
-                       onOptionSelected = { DaysselectedIndex = it },
+                       options = days,
+                       selectedIndex = daysSelectedIndex,
+                       onOptionSelected = { daysSelectedIndex = it },
                        width = 353,
                        bgcolor = Color.White,
                        selectedColor = Color.White,
@@ -528,13 +594,25 @@ if(!isConnected){
 
                        if (loading) {
 
-                           Spacer(modifier = Modifier.height(40.dp))
+//                           Spacer(modifier = Modifier.height(40.dp))
 
-                           CircularProgressIndicator(
-                               color = HeetoxDarkGreen,
+                           Column(
                                modifier = Modifier
-                                   .size(40.dp)
-                           )
+                                   .padding(horizontal = 20.dp)
+                                   .width(500.dp)
+                                   .height(300.dp)
+                                   .clip(RoundedCornerShape(20.dp))
+                                   .background(Color.White)
+                                   .padding(20.dp),
+                               horizontalAlignment = Alignment.CenterHorizontally,
+                               verticalArrangement = Arrangement.Center
+                           ){
+                               CircularProgressIndicator(
+                                   color = HeetoxDarkGreen,
+                                   modifier = Modifier
+                                       .size(40.dp)
+                               )
+                           }
 
                        } else {
 
@@ -555,7 +633,7 @@ if(!isConnected){
 
 
 
-                       if (ConsumedDayData.value.data?.sanitized_data?.isNotEmpty() == true) {
+                       if (consumedDayData.value.data?.sanitized_data?.isNotEmpty() == true) {
 
 
                            Column(
@@ -570,28 +648,28 @@ if(!isConnected){
                            ){
 
                                NutritionalValues(
-                                   calcium = ConsumedDayData.value.data!!.totalNutritionalValue.calcium,
-                                   cholesterol = ConsumedDayData.value.data!!.totalNutritionalValue.cholestrol,
-                                   dietaryFibre = ConsumedDayData.value.data!!.totalNutritionalValue.dietry_fibre,
-                                   energy = ConsumedDayData.value.data!!.totalNutritionalValue.energy,
-                                   iron = ConsumedDayData.value.data!!.totalNutritionalValue.iron,
-                                   magnesium = ConsumedDayData.value.data!!.totalNutritionalValue.magnessium,
-                                   phosphorous = ConsumedDayData.value.data!!.totalNutritionalValue.phosphorous,
-                                   potassium = ConsumedDayData.value.data!!.totalNutritionalValue.potassium,
-                                   protein = ConsumedDayData.value.data!!.totalNutritionalValue.protein,
-                                   saturatedFats = ConsumedDayData.value.data!!.totalNutritionalValue.saturates_fats,
-                                   sodium = ConsumedDayData.value.data!!.totalNutritionalValue.sodium,
-                                   totalCarbohydrates = ConsumedDayData.value.data!!.totalNutritionalValue.total_carbohydrates,
-                                   totalFats = ConsumedDayData.value.data!!.totalNutritionalValue.total_fats,
-                                   totalSugar = ConsumedDayData.value.data!!.totalNutritionalValue.total_sugar,
-                                   transFats = ConsumedDayData.value.data!!.totalNutritionalValue.trans_fats,
-                                   unsaturatedFats = ConsumedDayData.value.data!!.totalNutritionalValue.saturates_fats,
-                                   vitaminA = ConsumedDayData.value.data!!.totalNutritionalValue.vitamin_A,
-                                   vitaminB = ConsumedDayData.value.data!!.totalNutritionalValue.vitamin_B,
-                                   vitaminC = ConsumedDayData.value.data!!.totalNutritionalValue.vitamin_C,
-                                   vitaminD = ConsumedDayData.value.data!!.totalNutritionalValue.vitamin_D,
-                                   vitaminE = ConsumedDayData.value.data!!.totalNutritionalValue.vitamin_E,
-                                   zinc = ConsumedDayData.value.data!!.totalNutritionalValue.zinc
+                                   calcium = consumedDayData.value.data!!.totalNutritionalValue.calcium,
+                                   cholesterol = consumedDayData.value.data!!.totalNutritionalValue.cholestrol,
+                                   dietaryFibre = consumedDayData.value.data!!.totalNutritionalValue.dietry_fibre,
+                                   energy = consumedDayData.value.data!!.totalNutritionalValue.energy,
+                                   iron = consumedDayData.value.data!!.totalNutritionalValue.iron,
+                                   magnesium = consumedDayData.value.data!!.totalNutritionalValue.magnessium,
+                                   phosphorous = consumedDayData.value.data!!.totalNutritionalValue.phosphorous,
+                                   potassium = consumedDayData.value.data!!.totalNutritionalValue.potassium,
+                                   protein = consumedDayData.value.data!!.totalNutritionalValue.protein,
+                                   saturatedFats = consumedDayData.value.data!!.totalNutritionalValue.saturates_fats,
+                                   sodium = consumedDayData.value.data!!.totalNutritionalValue.sodium,
+                                   totalCarbohydrates = consumedDayData.value.data!!.totalNutritionalValue.total_carbohydrates,
+                                   totalFats = consumedDayData.value.data!!.totalNutritionalValue.total_fats,
+                                   totalSugar = consumedDayData.value.data!!.totalNutritionalValue.total_sugar,
+                                   transFats = consumedDayData.value.data!!.totalNutritionalValue.trans_fats,
+                                   unsaturatedFats = consumedDayData.value.data!!.totalNutritionalValue.saturates_fats,
+                                   vitaminA = consumedDayData.value.data!!.totalNutritionalValue.vitamin_A,
+                                   vitaminB = consumedDayData.value.data!!.totalNutritionalValue.vitamin_B,
+                                   vitaminC = consumedDayData.value.data!!.totalNutritionalValue.vitamin_C,
+                                   vitaminD = consumedDayData.value.data!!.totalNutritionalValue.vitamin_D,
+                                   vitaminE = consumedDayData.value.data!!.totalNutritionalValue.vitamin_E,
+                                   zinc = consumedDayData.value.data!!.totalNutritionalValue.zinc
                                )
 
                            }
@@ -599,7 +677,7 @@ if(!isConnected){
 
                            Text(
 
-                               text = "Total Products Consumed (${ConsumedDayData.value.data!!.sanitized_data.size})",
+                               text = "Total Products Consumed (${consumedDayData.value.data!!.sanitized_data.size})",
                                fontSize = 18.sp,
                                color = HeetoxDarkGray,
                                fontWeight = FontWeight.Bold,
@@ -614,16 +692,18 @@ if(!isConnected){
                            Spacer(modifier = Modifier.height(10.dp))
 
 
-                           ConsumedDayData.value.data?.sanitized_data?.forEach {
+                           consumedDayData.value.data?.sanitized_data?.forEach {
 
                                    item ->
 
                                if (token != null) {
-                                   ConsumedItem(data = item, ProductVM, token,navController)
+                                   ConsumedItem(data = item, deleteProduct = {
+                                           token,id -> consumedVM.deleteConsumedProduct(token,id)
+                                   }, token,navController)
                                }
 
 
-                               if (ConsumedDayData.value.data?.sanitized_data!!.size - 1 != ConsumedDayData.value.data?.sanitized_data?.indexOf(item)) {
+                               if (consumedDayData.value.data?.sanitized_data!!.size - 1 != consumedDayData.value.data?.sanitized_data?.indexOf(item)) {
 
                                    Column(
                                        modifier = Modifier
@@ -646,7 +726,7 @@ if(!isConnected){
                        } else {
 
 
-                           if (!loading && ConsumedDayData.value.data?.sanitized_data?.isEmpty() == true) {
+                           if (!loading && consumedDayData.value.data?.sanitized_data?.isEmpty() == true) {
                                Text(
                                    text = "Total Products Consumed (0)",
                                    fontSize = 18.sp,
@@ -675,47 +755,79 @@ if(!isConnected){
 
 
 //week data
-           if(MWDselectedIndex == 1) {
+           if(mWDSelectedIndex == 1) {
 
 
 // week data resources
-               LaunchedEffect(key1 = ConsumedWeekData.value) {
-
-                   when (ConsumedWeekData.value) {
-
-                       is Resource.Error -> {
-                           loading = false
-                           error = "oops! something went wrong"
-                       }
-
-                       is Resource.Loading -> {
-
-                           error = ""
-                           loading = true
-                       }
-
-                       is Resource.Nothing -> {
-
-                           error = ""
-                           loading = false
-
-                       }
-
-                       is Resource.Success -> {
-
-                           error = ""
-                           loading = false
-
-                           if (token != null) {
-                               ProductVM.getConsumedDayData(
-                                   token,
-                                   Dates[DaysselectedIndex]
-                               )
+               LaunchedEffect(Unit) {
+                   consumedVM.uiEvent.collect { event ->
+                       when (event) {
+                           is UiEvent.Loading -> {
+                               if (event.action == Action.GetConsumedWeekData) {
+                                   error = ""
+                                   loading = true
+                               }
                            }
+
+                           is UiEvent.Error -> {
+                               if (event.action == Action.GetConsumedWeekData) {
+                                   loading = false
+                                   error = "Oops! Something went wrong"
+                               }
+                           }
+
+                           is UiEvent.Success -> {
+                               if (event.action == Action.GetConsumedWeekData) {
+                                   loading = false
+                                   error = ""
+
+                                   // Trigger day-level data load after successful week fetch
+                               }
+                           }
+
+                           UiEvent.Idle -> Unit
                        }
                    }
-
                }
+
+
+//               LaunchedEffect(key1 = consumedWeekData.value) {
+//
+//                   when (consumedWeekData.value) {
+//
+//                       is Resource.Error -> {
+//                           loading = false
+//                           error = "oops! something went wrong"
+//                       }
+//
+//                       is Resource.Loading -> {
+//
+//                           error = ""
+//                           loading = true
+//                       }
+//
+//                       is Resource.Nothing -> {
+//
+//                           error = ""
+//                           loading = false
+//
+//                       }
+//
+//                       is Resource.Success -> {
+//
+//                           error = ""
+//                           loading = false
+//
+//                           if (token != null) {
+//                               consumedVM.getConsumedDayData(
+//                                   token,
+//                                   dates[daysSelectedIndex]
+//                               )
+//                           }
+//                       }
+//                   }
+//
+//               }
 
 
                //arrow and start end date
@@ -739,23 +851,19 @@ if(!isConnected){
                                .width(80.dp)
                        ) {
 
-                           if (ConsumedWeekData.value.data?.weekDatacondition?.hasPreviousWeek == true) {
+                           if (consumedWeekData.value.data?.weekDatacondition?.hasPreviousWeek == true) {
 
                                Button(
                                    onClick = {
 
-                                       if (token != null) {
-                                           ProductVM.getConsumedWeekData(
-                                               token,
-                                               ConsumedWeekData.value.data!!.weekDatacondition.previousWeek
-                                           )
+                                       val previousWeek = consumedWeekData.value.data?.weekDatacondition?.previousWeek
 
-                                           SelectedWeek =
-                                               ConsumedWeekData.value.data!!.weekDatacondition.previousWeek
-
+                                       if (token != null && !previousWeek.isNullOrBlank()) {
+                                           consumedVM.getConsumedWeekData(token, previousWeek)
+                                           selectedWeek = previousWeek
                                        }
 
-                                       DaysselectedIndex = 6
+                                       updateDayIndexOnWeekLoad = 6
 
                                    },
                                    colors = ButtonDefaults.buttonColors(
@@ -782,7 +890,7 @@ if(!isConnected){
                        ) {
 
                            Text(
-                               text = ConsumedWeekData.value.data?.date_range ?: "Start - End Date",
+                               text = consumedWeekData.value.data?.date_range ?: "Start - End Date",
                                fontSize = 16.sp,
                                color = HeetoxDarkGray,
                                modifier = Modifier
@@ -798,23 +906,19 @@ if(!isConnected){
                                .width(80.dp)
                        ) {
 
-                           if (ConsumedWeekData.value.data?.weekDatacondition?.hasNextWeek == true) {
+                           if (consumedWeekData.value.data?.weekDatacondition?.hasNextWeek == true) {
 
                                Button(
                                    onClick = {
 
-                                       if (token != null) {
-                                           ProductVM.getConsumedWeekData(
-                                               token,
-                                               ConsumedWeekData.value.data!!.weekDatacondition.nextWeek
-                                           )
+                                       val nextWeek = consumedWeekData.value.data?.weekDatacondition?.nextWeek
 
-                                           SelectedWeek =
-                                               ConsumedWeekData.value.data!!.weekDatacondition.nextWeek
-
+                                       if (token != null && !nextWeek.isNullOrBlank()) {
+                                           consumedVM.getConsumedWeekData(token, nextWeek)
+                                           selectedWeek = nextWeek
                                        }
 
-                                       DaysselectedIndex = 0
+                                       updateDayIndexOnWeekLoad = 0
 
                                    },
                                    colors = ButtonDefaults.buttonColors(
@@ -887,7 +991,7 @@ if(!isConnected){
                            }
                        } else {
                            // Ensure ConsumedWeekData has non-empty week data
-                           val weekData = ConsumedWeekData.value.data?.totalproductconsumed
+                           val weekData = consumedWeekData.value.data?.totalproductconsumed
 
 
                            if (weekData != null) {
@@ -904,28 +1008,28 @@ if(!isConnected){
 
 
                                        NutritionalValues(
-                                           calcium = ConsumedWeekData.value.data!!.totalNutritionalValue.calcium,
-                                           cholesterol = ConsumedWeekData.value.data!!.totalNutritionalValue.cholestrol,
-                                           dietaryFibre = ConsumedWeekData.value.data!!.totalNutritionalValue.dietry_fibre,
-                                           energy = ConsumedWeekData.value.data!!.totalNutritionalValue.energy,
-                                           iron = ConsumedWeekData.value.data!!.totalNutritionalValue.iron,
-                                           magnesium = ConsumedWeekData.value.data!!.totalNutritionalValue.magnessium,
-                                           phosphorous = ConsumedWeekData.value.data!!.totalNutritionalValue.phosphorous,
-                                           potassium = ConsumedWeekData.value.data!!.totalNutritionalValue.potassium,
-                                           protein = ConsumedWeekData.value.data!!.totalNutritionalValue.protein,
-                                           saturatedFats = ConsumedWeekData.value.data!!.totalNutritionalValue.saturates_fats,
-                                           sodium = ConsumedWeekData.value.data!!.totalNutritionalValue.sodium,
-                                           totalCarbohydrates = ConsumedWeekData.value.data!!.totalNutritionalValue.total_carbohydrates,
-                                           totalFats = ConsumedWeekData.value.data!!.totalNutritionalValue.total_fats,
-                                           totalSugar = ConsumedWeekData.value.data!!.totalNutritionalValue.total_sugar,
-                                           transFats = ConsumedWeekData.value.data!!.totalNutritionalValue.trans_fats,
-                                           unsaturatedFats = ConsumedWeekData.value.data!!.totalNutritionalValue.saturates_fats,
-                                           vitaminA = ConsumedWeekData.value.data!!.totalNutritionalValue.vitamin_A,
-                                           vitaminB = ConsumedWeekData.value.data!!.totalNutritionalValue.vitamin_B,
-                                           vitaminC = ConsumedWeekData.value.data!!.totalNutritionalValue.vitamin_C,
-                                           vitaminD = ConsumedWeekData.value.data!!.totalNutritionalValue.vitamin_D,
-                                           vitaminE = ConsumedWeekData.value.data!!.totalNutritionalValue.vitamin_E,
-                                           zinc = ConsumedWeekData.value.data!!.totalNutritionalValue.zinc
+                                           calcium = consumedWeekData.value.data!!.totalNutritionalValue.calcium,
+                                           cholesterol = consumedWeekData.value.data!!.totalNutritionalValue.cholestrol,
+                                           dietaryFibre = consumedWeekData.value.data!!.totalNutritionalValue.dietry_fibre,
+                                           energy = consumedWeekData.value.data!!.totalNutritionalValue.energy,
+                                           iron = consumedWeekData.value.data!!.totalNutritionalValue.iron,
+                                           magnesium = consumedWeekData.value.data!!.totalNutritionalValue.magnessium,
+                                           phosphorous = consumedWeekData.value.data!!.totalNutritionalValue.phosphorous,
+                                           potassium = consumedWeekData.value.data!!.totalNutritionalValue.potassium,
+                                           protein = consumedWeekData.value.data!!.totalNutritionalValue.protein,
+                                           saturatedFats = consumedWeekData.value.data!!.totalNutritionalValue.saturates_fats,
+                                           sodium = consumedWeekData.value.data!!.totalNutritionalValue.sodium,
+                                           totalCarbohydrates = consumedWeekData.value.data!!.totalNutritionalValue.total_carbohydrates,
+                                           totalFats = consumedWeekData.value.data!!.totalNutritionalValue.total_fats,
+                                           totalSugar = consumedWeekData.value.data!!.totalNutritionalValue.total_sugar,
+                                           transFats = consumedWeekData.value.data!!.totalNutritionalValue.trans_fats,
+                                           unsaturatedFats = consumedWeekData.value.data!!.totalNutritionalValue.saturates_fats,
+                                           vitaminA = consumedWeekData.value.data!!.totalNutritionalValue.vitamin_A,
+                                           vitaminB = consumedWeekData.value.data!!.totalNutritionalValue.vitamin_B,
+                                           vitaminC = consumedWeekData.value.data!!.totalNutritionalValue.vitamin_C,
+                                           vitaminD = consumedWeekData.value.data!!.totalNutritionalValue.vitamin_D,
+                                           vitaminE = consumedWeekData.value.data!!.totalNutritionalValue.vitamin_E,
+                                           zinc = consumedWeekData.value.data!!.totalNutritionalValue.zinc
                                        )
                                    }
 
@@ -946,7 +1050,7 @@ if(!isConnected){
                                    Spacer(modifier = Modifier.height(10.dp))
 
 
-                                   ConsumedWeekData.value.data!!.weekData.forEach {
+                                   consumedWeekData.value.data!!.weekData.forEach {
 
                                            item ->
 
@@ -974,7 +1078,9 @@ if(!isConnected){
                                            if (token != null) {
                                                ConsumedItem(
                                                    data = eachproduct,
-                                                   ProductVM,
+                                                   deleteProduct = {
+                                                       token,id -> consumedVM.deleteConsumedProduct(token,id)
+                                                   },
                                                    token,
                                                    navController
                                                )
@@ -1019,7 +1125,7 @@ if(!isConnected){
 
            //month data
 
-           if(MWDselectedIndex == 0){
+           if(mWDSelectedIndex == 0){
 
 
 
@@ -1027,46 +1133,75 @@ if(!isConnected){
                LaunchedEffect(key1 = Unit) {
 
                    if (token != null) {
-                       ProductVM.getConsumedMonthData(token,"currentmonth")
+                       consumedVM.getConsumedMonthData(token,"currentmonth")
                    }
 
 
                }
 
+
+               LaunchedEffect(Unit) {
+                   consumedVM.uiEvent.collect { event ->
+                       when (event) {
+                           is UiEvent.Loading -> {
+                               if (event.action == Action.GetConsumedMonthData) {
+                                   loading = true
+                                   error = ""
+                               }
+                           }
+
+                           is UiEvent.Error -> {
+                               if (event.action == Action.GetConsumedMonthData) {
+                                   loading = false
+                                   error = "Oops! Something went wrong"
+                               }
+                           }
+
+                           is UiEvent.Success -> {
+                               if (event.action == Action.GetConsumedMonthData) {
+                                   loading = false
+                                   error = ""
+                               }
+                           }
+
+                           UiEvent.Idle -> Unit
+                       }
+                   }
+               }
 
 
                // Month data resources
-               LaunchedEffect(key1 = ConsumedMonthData.value) {
-
-                   when (ConsumedMonthData.value) {
-
-                       is Resource.Error -> {
-                           loading = false
-                           error = "oops! something went wrong"
-                       }
-
-                       is Resource.Loading -> {
-
-                           error = ""
-                           loading = true
-                       }
-
-                       is Resource.Nothing -> {
-
-                           error = ""
-                           loading = false
-
-                       }
-
-                       is Resource.Success -> {
-
-                           error = ""
-                           loading = false
-
-                       }
-                   }
-
-               }
+//               LaunchedEffect(key1 = consumedMonthData.value) {
+//
+//                   when (consumedMonthData.value) {
+//
+//                       is Resource.Error -> {
+//                           loading = false
+//                           error = "oops! something went wrong"
+//                       }
+//
+//                       is Resource.Loading -> {
+//
+//                           error = ""
+//                           loading = true
+//                       }
+//
+//                       is Resource.Nothing -> {
+//
+//                           error = ""
+//                           loading = false
+//
+//                       }
+//
+//                       is Resource.Success -> {
+//
+//                           error = ""
+//                           loading = false
+//
+//                       }
+//                   }
+//
+//               }
 
 
                Column(
@@ -1091,15 +1226,15 @@ if(!isConnected){
                                .width(80.dp)
                        ) {
 
-                           if (ConsumedMonthData.value.data?.month_condition?.hasPreviousMonth == true) {
+                           if (consumedMonthData.value.data?.month_condition?.hasPreviousMonth == true) {
 
                                Button(
                                    onClick = {
 
                                        if (token != null) {
-                                           ProductVM.getConsumedMonthData(
+                                           consumedVM.getConsumedMonthData(
                                                token,
-                                               ConsumedMonthData.value.data?.month_condition!!.previousMonth
+                                               consumedMonthData.value.data?.month_condition!!.previousMonth
                                            )
 
                                        }
@@ -1129,7 +1264,7 @@ if(!isConnected){
                        ) {
 
                            Text(
-                               text = ConsumedMonthData.value.data?.month_range
+                               text = consumedMonthData.value.data?.month_range
                                    ?: "Start - End Date",
                                fontSize = 16.sp,
                                color = HeetoxDarkGray,
@@ -1146,15 +1281,15 @@ if(!isConnected){
                                .width(80.dp)
                        ) {
 
-                           if (ConsumedMonthData.value.data?.month_condition?.hasNextMonth == true) {
+                           if (consumedMonthData.value.data?.month_condition?.hasNextMonth == true) {
 
                                Button(
                                    onClick = {
 
                                        if (token != null) {
-                                           ProductVM.getConsumedMonthData(
+                                           consumedVM.getConsumedMonthData(
                                                token,
-                                               ConsumedMonthData.value.data!!.month_condition.nextMonth
+                                               consumedMonthData.value.data!!.month_condition.nextMonth
                                            )
 
                                        }
@@ -1200,12 +1335,12 @@ if(!isConnected){
                        }
                    } else {
 
-                       if(ConsumedMonthData.value.data?.totalproductconsumed != null && ConsumedMonthData.value.data?.totalproductconsumed!! > 0 ){
+                       if(consumedMonthData.value.data?.totalproductconsumed != null && consumedMonthData.value.data?.totalproductconsumed!! > 0 ){
 
 
                            Text(
 
-                               text = "Total Products Consumed (${ConsumedMonthData.value.data!!.totalproductconsumed})",
+                               text = "Total Products Consumed (${consumedMonthData.value.data!!.totalproductconsumed})",
                                fontSize = 18.sp,
                                color = HeetoxDarkGray,
                                fontWeight = FontWeight.Bold,
@@ -1230,7 +1365,7 @@ if(!isConnected){
                                    .padding(20.dp)
                            ) {
 
-                               ConsumedMonthData.value.data?.totalNutritionalValue?.let {
+                               consumedMonthData.value.data?.totalNutritionalValue?.let {
                                    NutritionalValues(
                                        calcium = it.calcium,
                                        cholesterol = it.cholestrol,
@@ -1303,53 +1438,88 @@ if(!isConnected){
        }
 
 
-    LaunchedEffect(key1 = DeleteConsumeData.value) {
-
-        when (DeleteConsumeData.value) {
-
-            is Resource.Error -> {
-                loading = false
-                error = "oops! something went wrong"
-            }
-
-            is Resource.Loading -> {
-
-                error = ""
-                loading = true
-            }
-
-            is Resource.Nothing -> {
-                error = ""
-                loading = false
-            }
-
-            is Resource.Success -> {
-
-                error = ""
-                loading = false
-
-                if (token != null) {
-
-                    ProductVM.getConsumedWeekData(
-                        token,
-                        SelectedWeek
-                    )
-
-//                    ProductVM.getConsumedDayData(
-//                        token,
-//                        Dates[DaysselectedIndex]
-//                    )
-
-
+    LaunchedEffect(Unit) {
+        consumedVM.uiEvent.collect { event ->
+            when (event) {
+                is UiEvent.Loading -> {
+                    if (event.action == Action.DeleteConsumedProduct) {
+                        loading = true
+                        error = ""
+                    }
                 }
 
+                is UiEvent.Error -> {
+                    if (event.action == Action.DeleteConsumedProduct) {
+                        loading = false
+                        error = "Oops! Something went wrong"
+                    }
+                }
 
+                is UiEvent.Success -> {
+                    if (event.action == Action.DeleteConsumedProduct) {
+                        loading = false
+                        error = ""
+
+                        if (token != null) {
+                            consumedVM.getConsumedWeekData(token, selectedWeek)
+                            // Optional: Trigger day data refresh if needed
+                             consumedVM.getConsumedDayData(token, dates[daysSelectedIndex])
+                        }
+                    }
+                }
+
+                UiEvent.Idle -> Unit
             }
-
         }
-
-
     }
+
+//    LaunchedEffect(key1 = deleteConsumeData.value) {
+//
+//        when (deleteConsumeData.value) {
+//
+//            is Resource.Error -> {
+//                loading = false
+//                error = "oops! something went wrong"
+//            }
+//
+//            is Resource.Loading -> {
+//
+//                error = ""
+//                loading = true
+//            }
+//
+//            is Resource.Nothing -> {
+//                error = ""
+//                loading = false
+//            }
+//
+//            is Resource.Success -> {
+//
+//                error = ""
+//                loading = false
+//
+//                if (token != null) {
+//
+//                    consumedVM.getConsumedWeekData(
+//                        token,
+//                        selectedWeek
+//                    )
+//
+////                    ProductVM.getConsumedDayData(
+////                        token,
+////                        Dates[DaysselectedIndex]
+////                    )
+//
+//
+//                }
+//
+//
+//            }
+//
+//        }
+//
+//
+//    }
 
 }
 
@@ -1363,7 +1533,7 @@ if(!isConnected){
 
 
 @Composable
-fun ConsumedItem(data : ProductsData,ProductVM: ProductsViewModel,token : String,navController: NavHostController){
+fun ConsumedItem(data : ProductsData,deleteProduct:(String,String)->Unit,token : String,navController: NavHostController){
 
 Row(
     modifier = Modifier
@@ -1475,7 +1645,7 @@ Row(
                     .padding(end = 10.dp)  // Optional padding if needed
                     .clickable {
 
-                        ProductVM.deleteConsumedProduct(token, data._id)
+                        deleteProduct(token, data._id)
 
                     },
                 verticalArrangement = Arrangement.Bottom  // Aligns the content to the bottom

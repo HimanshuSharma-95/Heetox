@@ -35,7 +35,6 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,38 +53,40 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import coil.transform.CircleCropTransformation
 import com.heetox.app.Composables.AuthCompose.Input
 import com.heetox.app.Composables.AuthCompose.LoadingOverlay
+import com.heetox.app.Model.Authentication.LocalStoredData
 import com.heetox.app.Model.Authentication.UpdateProfileSend
+import com.heetox.app.Model.Authentication.UpdateUserProfileImageSend
 import com.heetox.app.R
-import com.heetox.app.Utils.Resource
-import com.heetox.app.ViewModel.Authentication.AuthenticationViewModel
+import com.heetox.app.Utils.Action
+import com.heetox.app.Utils.UiEvent
 import com.heetox.app.ui.theme.HeetoxDarkGray
 import com.heetox.app.ui.theme.HeetoxDarkGreen
 import com.heetox.app.ui.theme.HeetoxGreen
 import com.heetox.app.ui.theme.HeetoxWhite
+import kotlinx.coroutines.flow.Flow
 
 
 @Composable
-fun updateprofilescreen(navHostController: NavHostController){
+fun UpdateProfileScreen(navHostController: NavHostController,
+                        updateProfileImage:(UpdateUserProfileImageSend)->Unit,
+                        removeProfileImage:(String)->Unit,
+                        userData:LocalStoredData?,
+                        updateProfile:(String,UpdateProfileSend)->Unit,
+                        uiEvent:Flow<UiEvent>
+                        ) {
 
-    val viewmodel : AuthenticationViewModel = hiltViewModel()
     val scrollState = rememberScrollState()
-    val Localdata = viewmodel.Localdata.collectAsState()
-    val UpdateProfileStatus = viewmodel.UpdateUserData.collectAsState()
-    val UplaodImage = viewmodel.UploadProfileImageData.collectAsState()
-    val RemoveImage = viewmodel.RemoveProfileImage.collectAsState()
     val context = LocalContext.current
-    val token = Localdata.value?.Token
+    val token = userData?.Token ?: ""
 
 
     var imageUri by remember { mutableStateOf<Uri?>(null) }
-
 
 
     val photoPickerLauncher = rememberLauncherForActivityResult(
@@ -93,38 +94,31 @@ fun updateprofilescreen(navHostController: NavHostController){
     ) { uri ->
         imageUri = uri
         uri?.let {
-            if (token != null) {
-                viewmodel.updateprofileimage(context, token, it)
-            }
+
+            updateProfileImage(UpdateUserProfileImageSend(
+                context = context,
+                uri = it,
+                token = token
+            ))
+
         }
     }
 
-//    val launcher = rememberLauncherForActivityResult(
-//        contract = ActivityResultContracts.GetContent(),
-//        onResult = { uri: Uri? ->
-//            imageUri = uri
-//            uri?.let {
-//                if (token != null) {
-//                    imageUri?.let { it1 -> viewmodel.updateprofileimage(context,token, it1) }
-//                }
-//            }
-//        }
-//    )
 
     var name by rememberSaveable {
-        mutableStateOf(Localdata.value!!.Name)
+        mutableStateOf(userData!!.Name)
     }
 
     var email by rememberSaveable {
-        mutableStateOf(Localdata.value!!.Email)
+        mutableStateOf(userData!!.Email)
     }
 
     var phone by rememberSaveable {
-        mutableStateOf(Localdata.value!!.Phone)
+        mutableStateOf(userData!!.Phone)
     }
 
     var dob by rememberSaveable {
-        mutableStateOf(Localdata.value!!.Dob)
+        mutableStateOf(userData!!.Dob)
     }
 
     var error by rememberSaveable {
@@ -136,7 +130,7 @@ fun updateprofilescreen(navHostController: NavHostController){
     }
 
     var gender by rememberSaveable {
-        mutableStateOf(Localdata.value!!.gender)
+        mutableStateOf(userData!!.gender)
     }
 
     val genderoptions = listOf("male","female","other")
@@ -151,7 +145,7 @@ fun updateprofilescreen(navHostController: NavHostController){
 
 
         val ImageUrl by rememberSaveable {
-            mutableStateOf(Localdata.value!!.avatar)
+            mutableStateOf(userData!!.avatar)
         }
 
 
@@ -272,30 +266,12 @@ fun updateprofilescreen(navHostController: NavHostController){
                             Text(text = "Update Image")
                         }
 
-//                    Button(onClick = { launcher.launch("image/*") }
-//                        ,
-//                        colors = ButtonDefaults.run {
-//                            buttonColors(
-//                                contentColor = Color.White,
-//                                containerColor = HeetoxDarkGreen
-//                            )
-//                        },
-//                        shape = RoundedCornerShape(10.dp),
-////                        border = BorderStroke(2.dp, HeetoxDarkGreen),
-//                        modifier = Modifier
-//                            .padding(horizontal = 3.dp , vertical = 10.dp)
-//                    ) {
-//                        Text(text = "Update Image")
-//                    }
 
 
                     if(ImageUrl != ""){
+
                         Button(onClick = {
-
-                            if (token != null) {
-                                viewmodel.removeprofileimage(token)
-                            }
-
+                            removeProfileImage(token)
                         }
                             ,
                             colors = ButtonDefaults.run {
@@ -398,39 +374,35 @@ fun updateprofilescreen(navHostController: NavHostController){
                     Input(label = "Phone", value = phone, onValueChange ={phone = it} )
 
 
-                    val dobregex = Regex("^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$")
-                    val emailregex = Regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
+                    val dobRegex = Regex("^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$")
+                    val emailRegex = Regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
 
 
                     Button(onClick = {
 
-                        val token = Localdata.value?.Token
-
                         if(name == ""){
                             error = "Name cannot be empty"
-                        }else if(!dobregex.matches(dob)){
+                        }else if(!dobRegex.matches(dob)){
                             error = "DOB not in Correct Format"
                         }else if(gender == ""){
                             error = "Gender cannot be empty"
                         }else if(phone.length != 10){
                             error = "Phone no. is not Correct"
-                        }else if(!emailregex.matches(email)) {
+                        }else if(!emailRegex.matches(email)) {
                             error = "Email is not Correct"
                         }else {
 
                             error = ""
 
-                            if (token != null) {
-                                viewmodel.updateuser(token,
-                                    UpdateProfileSend(
-                                        email,
-                                        name,
-                                        phone,
-                                        dob,
-                                        gender
-                                    )
+                            updateProfile(token,
+                                UpdateProfileSend(
+                                    email,
+                                    name,
+                                    phone,
+                                    dob,
+                                    gender
                                 )
-                            }
+                            )
 
 
                         }
@@ -467,100 +439,53 @@ fun updateprofilescreen(navHostController: NavHostController){
     }
 
 
-    LaunchedEffect(key1 = UplaodImage.value ) {
-
-        when(UplaodImage.value){
-
-            is Resource.Error ->{
-
-                Toast.makeText(context,"Couldn't Update Try again",Toast.LENGTH_SHORT).show()
-                error = ""
-                loading = false
-
-            }
-
-            is Resource.Loading -> {
-                error = "updating.."
-               loading = true
-            }
-
-            is Resource.Nothing -> {
-                error = ""
-            }
-
-            is Resource.Success -> {
-
-                loading = false
-                error = ""
-                Toast.makeText(context,"Image updated",Toast.LENGTH_SHORT).show()
-
-            }
-        }
-
-    }
 
 
-    LaunchedEffect(key1 = RemoveImage.value) {
+    LaunchedEffect(Unit) {
+        uiEvent.collect { event ->
+            when (event) {
+                is UiEvent.Loading -> {
+                    loading = true
+                    error = when (event.action) {
+                        Action.UpdateUserImage -> "Updating image..."
+                        Action.RemoveUserProfile -> "Removing image..."
+                        Action.UpdateUserData -> "Updating profile..."
+                        else -> ""
+                    }
+                }
 
-        when(RemoveImage.value){
-            is Resource.Error -> {
-                Toast.makeText(context,"Couldn't Update Try again",Toast.LENGTH_SHORT).show()
-                error = ""
-                loading = false
-            }
+                is UiEvent.Success -> {
+                    loading = false
+                    error = ""
+                    when (event.action) {
+                        Action.UpdateUserImage -> {
+                            Toast.makeText(context, "Image updated", Toast.LENGTH_SHORT).show()
+                            navHostController.navigate("profile")
+                        }
+                        Action.RemoveUserProfile -> {
+                            Toast.makeText(context, "Image removed", Toast.LENGTH_SHORT).show()
+                            navHostController.navigate("profile")
+                        }
+                        Action.UpdateUserData -> {
+                            Toast.makeText(context, "Profile updated", Toast.LENGTH_SHORT).show()
+                            navHostController.navigate("profile")
+                        }
+                        else -> {}
+                    }
+                }
 
-            is Resource.Loading -> {
-                error = "removing.."
-                loading = true
-            }
-            is Resource.Nothing -> {
-                error = ""
-            }
-            is Resource.Success -> {
+                is UiEvent.Error -> {
+                    loading = false
+                    error = ""
+                    Toast.makeText(context, "Couldn't update. Try again.", Toast.LENGTH_SHORT).show()
+                }
 
-                loading = false
-                error = ""
-                Toast.makeText(context,"Image Removed",Toast.LENGTH_SHORT).show()
-
+                UiEvent.Idle -> {
+                    loading = false
+                    error = ""
+                }
             }
         }
-
-
-
     }
-
-
-
-
-
-
-    LaunchedEffect(key1 = UpdateProfileStatus.value) {
-
-        when(UpdateProfileStatus.value){
-
-            is Resource.Error -> {
-                Toast.makeText(context,"Couldn't Update Try again",Toast.LENGTH_SHORT).show()
-                error = ""
-                loading = false
-            }
-            is Resource.Loading -> {
-                error = "Updating..."
-                loading = true
-            }
-            is Resource.Nothing -> {
-            loading = false
-            }
-            is Resource.Success -> {
-
-                navHostController.navigate("profile")
-                Toast.makeText(context,"Profile Updated",Toast.LENGTH_SHORT).show()
-                loading = false
-                error = "Profile updated"
-
-            }
-
-        }
-    }
-
 
 }

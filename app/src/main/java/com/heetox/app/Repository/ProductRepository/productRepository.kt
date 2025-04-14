@@ -17,520 +17,415 @@ import com.heetox.app.Model.Product.MostScannedResponse
 import com.heetox.app.Model.Product.ProductbyBarcodeResponse
 import com.heetox.app.Model.Product.SubCategoriesResponse
 import com.heetox.app.Utils.Resource
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import com.heetox.app.Utils.extractErrorMessage
 import javax.inject.Inject
 import javax.inject.Singleton
 
 
 @Singleton
-class productRepository @Inject constructor(private val ProductApi : ProductInterface) {
+class productRepository @Inject constructor(private val productApi: ProductInterface) {
+
+//
+//    private var MostScannedProductData = MutableStateFlow<Resource<List<MostScannedResponse>>>(Resource.Nothing())
+//
+//    val accessMostScannedProductData : StateFlow<Resource<List<MostScannedResponse>>>
+//        get() = MostScannedProductData
+
+//
+//    private  var CategoriesData = MutableStateFlow<Resource<CategoriesResponse>>(Resource.Nothing())
+//
+//    val accessCategoriesData : StateFlow<Resource<CategoriesResponse>>
+//        get() = CategoriesData
+
+//    private var ProductbyBarcodeData = MutableStateFlow<Resource<ProductbyBarcodeResponse>>(Resource.Nothing())
+//
+//    val accessProductByBarcodeData : StateFlow<Resource<ProductbyBarcodeResponse>>
+//        get() = ProductbyBarcodeData
 
 
-    private var MostScannedProductData = MutableStateFlow<Resource<List<MostScannedResponse>>>(Resource.Nothing())
-
-    val accessMostScannedProductData : StateFlow<Resource<List<MostScannedResponse>>>
-        get() = MostScannedProductData
-
-
-    private  var CategoriesData = MutableStateFlow<Resource<CategoriesResponse>>(Resource.Nothing())
-
-    val accessCategoriesData : StateFlow<Resource<CategoriesResponse>>
-        get() = CategoriesData
-
-    private var ProductbyBarcodeData = MutableStateFlow<Resource<ProductbyBarcodeResponse>>(Resource.Nothing())
-
-    val accessProductByBarcodeData : StateFlow<Resource<ProductbyBarcodeResponse>>
-        get() = ProductbyBarcodeData
+//    private  var LikeUnlikeProductData = MutableStateFlow<Resource<LikeUnlikeResponse>>(Resource.Nothing())
+//
+//    val accessLikedProductData : StateFlow<Resource<LikeUnlikeResponse>>
+//        get() = LikeUnlikeProductData
 
 
-    private  var LikeUnlikeProductData = MutableStateFlow<Resource<LikeUnlikeResponse>>(Resource.Nothing())
-
-    val accessLikedProductData : StateFlow<Resource<LikeUnlikeResponse>>
-        get() = LikeUnlikeProductData
-
-
-    private var AlternateProductData = MutableStateFlow<Resource<ArrayList<AlternateResponseItem>>>(Resource.Nothing())
-
-    val accessAlternateProduct : StateFlow<Resource<ArrayList<AlternateResponseItem>>>
-        get() = AlternateProductData
+//    private var AlternateProductData = MutableStateFlow<Resource<ArrayList<AlternateResponseItem>>>(Resource.Nothing())
+//
+//    val accessAlternateProduct : StateFlow<Resource<ArrayList<AlternateResponseItem>>>
+//        get() = AlternateProductData
 
 
+//    private var SearchData = MutableStateFlow<Resource<ArrayList<AlternateResponseItem>>>(Resource.Nothing())
+//
+//    val accessSearchData : StateFlow<Resource<ArrayList<AlternateResponseItem>>>
+//        get() = SearchData
 
 
-    private var SearchData = MutableStateFlow<Resource<ArrayList<AlternateResponseItem>>>(Resource.Nothing())
-
-    val accessSearchData : StateFlow<Resource<ArrayList<AlternateResponseItem>>>
-        get() = SearchData
-
-
+//    private var CheckBarcodeData = MutableStateFlow<Resource<CheckBarcodeResponse>>(Resource.Nothing())
+//
+//    val accessCheckBarcodeData: StateFlow<Resource<CheckBarcodeResponse>>
+//        get() = CheckBarcodeData
 
 
-    private var CheckBarcodeData = MutableStateFlow<Resource<CheckBarcodeResponse>>(Resource.Nothing())
-
-    val accessCheckBarcodeData : StateFlow<Resource<CheckBarcodeResponse>>
-        get() = CheckBarcodeData
-
-
+//    private var getLikedProductData = MutableStateFlow<Resource<LikedProductRepsonse>>(Resource.Nothing())
+//
+//    val accessGetLikedProductData: StateFlow<Resource<LikedProductRepsonse>>
+//        get() = getLikedProductData
 
 
-    private var getLikedProductData = MutableStateFlow<Resource<LikedProductRepsonse>>(Resource.Nothing())
-
-    val accessGetLikedProductData : StateFlow<Resource<LikedProductRepsonse>>
-        get() = getLikedProductData
-
-
-
-    private var ConsumeProduct = MutableStateFlow<Resource<ConsumeProductResponse>>(Resource.Nothing())
-
-    val accessConsumeProductData : StateFlow<Resource<ConsumeProductResponse>>
-        get() = ConsumeProduct
+//    private var SubCategoryData = MutableStateFlow<Resource<SubCategoriesResponse>>(Resource.Nothing())
+//
+//    val accessSubCategoryData: StateFlow<Resource<SubCategoriesResponse>>
+//        get() = SubCategoryData
 
 
 
-
-    private var ConsumedWeekData = MutableStateFlow<Resource<ConsumedWeekDataResponse>>(Resource.Nothing())
-
-    val accessConsumedWeekData : StateFlow<Resource<ConsumedWeekDataResponse>>
-        get() = ConsumedWeekData
-
+//    private var ConsumeProduct = MutableStateFlow<Resource<ConsumeProductResponse>>(Resource.Nothing())
+//
+//    val accessConsumeProductData: StateFlow<Resource<ConsumeProductResponse>>
+//        get() = ConsumeProduct
 
 
-
-    private var ConsumedDayData = MutableStateFlow<Resource<ConsumedDayDataResponse>>(Resource.Nothing())
-
-    val accessConsumedDayData : StateFlow<Resource<ConsumedDayDataResponse>>
-        get() = ConsumedDayData
-
-
-
-    private var DeleteConsumedProduct = MutableStateFlow<Resource<ConsumeProductResponse>>(Resource.Nothing())
-
-    val accessDeleteConsumedProduct : StateFlow<Resource<ConsumeProductResponse>>
-        get() = DeleteConsumedProduct
+//    private var ConsumedWeekData =
+//        MutableStateFlow<Resource<ConsumedWeekDataResponse>>(Resource.Nothing())
+//
+//    val accessConsumedWeekData: StateFlow<Resource<ConsumedWeekDataResponse>>
+//        get() = ConsumedWeekData
 
 
-
-    private var ConsumedMonthData = MutableStateFlow<Resource<ConsumedMonthDataResponse>>(Resource.Nothing())
-
-    val accessConsumedMonthData : StateFlow<Resource<ConsumedMonthDataResponse>>
-        get() = ConsumedMonthData
-
+//    private var ConsumedDayData = MutableStateFlow<Resource<ConsumedDayDataResponse>>(Resource.Nothing())
+//
+//    val accessConsumedDayData: StateFlow<Resource<ConsumedDayDataResponse>>
+//        get() = ConsumedDayData
 
 
-    private var SubCategoryData = MutableStateFlow<Resource<SubCategoriesResponse>>(Resource.Nothing())
+//    private var DeleteConsumedProduct =
+//        MutableStateFlow<Resource<ConsumeProductResponse>>(Resource.Nothing())
 
-    val accessSubCategoryData : StateFlow<Resource<SubCategoriesResponse>>
-        get() = SubCategoryData
+//    val accessDeleteConsumedProduct: StateFlow<Resource<ConsumeProductResponse>>
+//        get() = DeleteConsumedProduct
+
+
+//    private var ConsumedMonthData =
+//        MutableStateFlow<Resource<ConsumedMonthDataResponse>>(Resource.Nothing())
+//
+//    val accessConsumedMonthData: StateFlow<Resource<ConsumedMonthDataResponse>>
+//        get() = ConsumedMonthData
+//
 
 
 
 
-
-    suspend fun getMostScannedProducts(){
-
-
-        MostScannedProductData.emit(Resource.Loading())
+    suspend fun getMostScannedProducts(): Resource<List<MostScannedResponse>> {
 
         try {
+            val response = productApi.getMostScanned()
 
-            val response = ProductApi.getMostScanned()
-
-            if (response.body()!= null && response.body()!!.success){
-
-                MostScannedProductData.emit(Resource.Success(response.body()!!.data))
-
-            }else{
-
-                val errorBody = response.errorBody()?.string()
-                val errorResponse = errorBody.let {
-                    Gson().fromJson(it,ErrorResponse::class.java)
-                }
-
-                MostScannedProductData.emit(Resource.Error(errorResponse.message))
-
+            return if (response.body() != null && response.body()!!.success) {
+                Resource.Success(response.body()!!.data)
+            } else {
+                Resource.Error(extractErrorMessage(response))
             }
 
-        }catch(e:Exception){
-
-            MostScannedProductData.emit(Resource.Error("Couldn't load Products"))
+        } catch (e: Exception) {
+            return Resource.Error("Couldn't load Products")
 //            Log.d("product repo", "getMostScannedProducts: $e ")
-
-
         }
 
 
     }
 
 
-
-
-
-    suspend fun getCategories(){
-
-
-        CategoriesData.emit(Resource.Loading())
+    suspend fun getCategories(): Resource<CategoriesResponse> {
 
         try {
 
-            val response = ProductApi.getCategories()
+            val response = productApi.getCategories()
 
-            if(response.body() != null && response.body()!!.success){
+            return if (response.body() != null && response.body()!!.success) {
 
-                CategoriesData.emit(Resource.Success(response.body()!!.data))
+                Resource.Success(response.body()!!.data)
 
-            }else{
+            } else {
 
-                val errorBody = response.errorBody()?.string()
-                val errorResponse = errorBody.let {
-                    Gson().fromJson(it,ErrorResponse::class.java)
-                }
-
-                CategoriesData.emit(Resource.Error(errorResponse.message))
+                Resource.Error(extractErrorMessage(response))
 
             }
 
-        }catch (e : Exception){
+        } catch (e: Exception) {
 
-            CategoriesData.emit(Resource.Error("Couldn't Load Categories"))
+            return Resource.Error("Couldn't Load Categories")
 //            Log.d("product repo ", "getCategories: $e ")
-
         }
-
 
     }
 
 
-
-
-    suspend fun getProductByBarcode(barcode : String, Authorization: String){
-
-        ProductbyBarcodeData.emit(Resource.Loading())
+    suspend fun getProductByBarcode(
+        barcode: String,
+        authorization: String
+    ): Resource<ProductbyBarcodeResponse> {
 
         try {
 
-            val response = ProductApi.getProductByBarcode(barcode, Authorization)
+            val response = productApi.getProductByBarcode(barcode, authorization)
 
-//            Log.d("product repo", "barco ${response.body().toString()}")
+            return if (response.body() != null && response.body()!!.success) {
 
-            if(response.body()!= null && response.body()!!.success){
+                Resource.Success(response.body()!!.data)
 
-                ProductbyBarcodeData.emit(Resource.Success(response.body()!!.data))
+            } else {
 
-            }else{
+                Resource.Error(extractErrorMessage(response))
 
-                val errorBody = response.errorBody()?.string()
-                val errorResponse = errorBody.let {
-                    Gson().fromJson(it,ErrorResponse::class.java)
-                }
-
-                   ProductbyBarcodeData.emit(Resource.Error(errorResponse.message))
-
-//                Log.d("product repo", "barco ${errorResponse.message}")
-
+                //                Log.d("product repo", "barcode ${errorResponse.message}")
 
             }
 
-        }catch (e:Exception){
+        } catch (e: Exception) {
 
-            ProductbyBarcodeData.emit(Resource.Error("Sorry! couldn't load this product"))
+            return Resource.Error("Sorry! couldn't load this product")
 //            Log.d("product repo ", "getProductByBarcode: $e")
 
-
         }
-
 
 
     }
 
 
+    suspend fun likeUnlikeProduct(
+        barcode: String,
+        authorization: String
+    ): Resource<LikeUnlikeResponse> {
 
 
+        try {
 
+            val response = productApi.likeUnlikeProduct(barcode, authorization)
 
-    suspend fun LikeUnlikeProduct(barcode : String, Authorization : String){
+            return if (response.body() != null && response.body()!!.success) {
 
-        LikeUnlikeProductData.emit(Resource.Loading())
+                (Resource.Success(response.body()!!.data))
 
-        try{
+            } else {
 
-            val response = ProductApi.likeUnlikeProduct(barcode,Authorization)
-
-            if(response.body()!= null && response.body()!!.success){
-
-                LikeUnlikeProductData.emit((Resource.Success(response.body()!!.data)))
-
-            }else{
-
-
-                val errorBody = response.errorBody()?.string()
-                val errorResponse = errorBody.let {
-                    Gson().fromJson(it,ErrorResponse::class.java)
-                }
-
-                LikeUnlikeProductData.emit(Resource.Error(errorResponse.message))
+                Resource.Error(extractErrorMessage(response))
 
             }
 
-        }catch (e : Exception){
+        } catch (e: Exception) {
 
 
-            LikeUnlikeProductData.emit(Resource.Error("Couldn't Like Product"))
+            return Resource.Error("Couldn't Like Product")
 
 //            Log.d("Product repo ", "LikeUnlikeProduct: $e")
 
         }
 
 
-
     }
 
 
+    suspend fun getAlternativeProducts(
+        category: String,
+        authorization: String
+    ): Resource<ArrayList<AlternateResponseItem>> {
+
+        try {
 
 
-
-
-
-
-
-    suspend fun getAlternativeProducts(category : String,Authorization: String){
-
-        AlternateProductData.emit(Resource.Loading())
-
-
-        try{
-
-//            Log.d("product repo", "getAlternativeProducts: Heya ")
-
-            val response = ProductApi.getAlternateProducts(category,Authorization)
+            val response = productApi.getAlternateProducts(category, authorization)
 
 //            Log.d("product repo", "getAlternativeProducts: fof ${response.body().toString()}")
 
-            if(response.body()!= null && response.body()!!.success){
+            return if (response.body() != null && response.body()!!.success) {
 
-                AlternateProductData.emit(Resource.Success(response.body()!!.data))
+                Resource.Success(response.body()!!.data)
 
-            }else{
+            } else {
 
-
-                val errorBody = response.errorBody()?.string()
-                val errorResponse = errorBody.let {
-                    Gson().fromJson(it,ErrorResponse::class.java)
-                }
-
-                AlternateProductData.emit(Resource.Error(errorResponse.message))
+                Resource.Error(extractErrorMessage(response))
 
             }
 
 
-        }catch (e : Exception){
+        } catch (e: Exception) {
 
-            AlternateProductData.emit(Resource.Error("Couldn't Load Products oops"))
+            return Resource.Error("Couldn't Load Products oops")
 //            Log.d("product repo", "getAlternativeProducts: $e")
 
         }
 
 
-
     }
 
 
-
-
-
-
-
-    suspend fun getSearch(query : String,Authorization: String){
-
-        SearchData.emit(Resource.Loading())
-
-try {
-
-    val response = ProductApi.search(query,Authorization)
-
-    if(response.body()!= null && response.body()!!.success){
-
-        SearchData.emit(Resource.Success(response.body()!!.data))
-
-}else{
-
-    val errorBody = response.errorBody()?.string()
-    val errorResponse = errorBody.let {
-        Gson().fromJson(it,ErrorResponse::class.java)
-    }
-
-        SearchData.emit(Resource.Error(errorResponse.message))
-
-}
-
-}catch (e : Exception){
-
-//    Log.d("product repo", "getSearch: $e")
-
-    SearchData.emit(Resource.Error("Couldn't Load Products oops"))
-
-    }
-
-
-    }
-
-
-
-
-
-
-
-
-
-    suspend fun CheckBarcode(barcode: String){
-
-        CheckBarcodeData.emit(Resource.Loading())
+    suspend fun getSearch(
+        query: String,
+        authorization: String
+    ): Resource<ArrayList<AlternateResponseItem>> {
 
         try {
-            val response = ProductApi.checkBarcode(barcode)
 
+            val response = productApi.search(query, authorization)
 
-            if(response.body()!= null && response.body()!!.success){
+            return if (response.body() != null && response.body()!!.success) {
 
-                CheckBarcodeData.emit(Resource.Success(response.body()!!.data))
+                Resource.Success(response.body()!!.data)
 
+            } else {
 
-            }else{
-
-                val errorBody = response.errorBody()?.string()
-                val errorResponse = errorBody.let {
-                    Gson().fromJson(it,ErrorResponse::class.java)
-                }
-
-                CheckBarcodeData.emit(Resource.Error(errorResponse.message))
+                Resource.Error(extractErrorMessage(response))
 
             }
 
-        }catch (e : Exception){
+        } catch (e: Exception) {
 
-            CheckBarcodeData.emit(Resource.Error("Couldn't Load Products oops"))
+//    Log.d("product repo", "getSearch: $e")
+
+            return Resource.Error("Couldn't Load Products oops")
+
+        }
+
+
+    }
+
+
+    suspend fun checkBarcode(barcode: String):Resource<CheckBarcodeResponse>{
+
+
+        try {
+            val response = productApi.checkBarcode(barcode)
+
+
+           return if (response.body() != null && response.body()!!.success) {
+
+                Resource.Success(response.body()!!.data)
+
+            } else {
+
+                return Resource.Error(extractErrorMessage(response))
+
+            }
+
+        } catch (e: Exception) {
+
+           return Resource.Error("Couldn't Load Products oops")
 //            Log.d("product repo", "Checkbarcode: $e")
 
         }
 
 
-
     }
 
 
+    suspend fun getLikedProducts(authorization: String):Resource<LikedProductRepsonse>{
 
-
-
-
-    suspend fun getLikedProducts(Authorization: String){
-
-        getLikedProductData.emit(Resource.Loading())
 
         try {
 
-            val response = ProductApi.getLikedProducts(Authorization)
+            val response = productApi.getLikedProducts(authorization)
 
-            if(response.body()!= null && response.body()!!.success) {
+           return if (response.body() != null && response.body()!!.success) {
 
-                getLikedProductData.emit(Resource.Success(response.body()!!.data))
+              Resource.Success(response.body()!!.data)
 
-            }else{
-                val errorBody = response.errorBody()?.string()
-                val errorResponse = errorBody.let {
-                    Gson().fromJson(it,ErrorResponse::class.java)
-                }
+            } else {
 
-                getLikedProductData.emit(Resource.Error(errorResponse.message))
+                return Resource.Error(extractErrorMessage(response))
 
             }
 
-        }catch (e:Exception){
+        } catch (e: Exception) {
 
-            getLikedProductData.emit(Resource.Error("Couldn't Load Products oops!"))
+            return Resource.Error("Couldn't Load Products oops!")
 
 //            Log.d("product repo", "getLikedProducts: $e")
 
         }
 
 
-
     }
 
 
 
 
+    suspend fun getSubCategory(category: String):Resource<SubCategoriesResponse>{
 
 
+        try {
 
+            val response = productApi.getSubCategories(category)
 
-    suspend fun ConsumeProduct(barcode:String,size:Float,Token : String){
+           return if (response.body()!!.success && response.body() != null) {
 
-        ConsumeProduct.emit(Resource.Loading())
+                 Resource.Success(response.body()!!.data)
+            } else {
 
-        try{
-
-            val response = ProductApi.consumeProduct(Token,barcode, ConsumeProductSend(size))
-
-            if(response.body()!!.success && response.body() != null ){
-
-                ConsumeProduct.emit(Resource.Success(response.body()!!.data))
-
-            }else{
-
-                val errorBody = response.errorBody()?.string()
-                val errorResponse = errorBody.let {
-                    Gson().fromJson(it,ErrorResponse::class.java)
-                }
-
-                ConsumeProduct.emit(Resource.Error(errorResponse.message))
-
-                delay(100)
-                ConsumeProduct.emit(Resource.Nothing())
+                Resource.Error(extractErrorMessage(response))
 
             }
-        }catch(e : Exception){
+        } catch (e: Exception) {
 
-            ConsumeProduct.emit(Resource.Error("Oops! Try Again"))
-
-//            Log.d("product repo", "Consume Product: $e")
+            return Resource.Error("Oops! Try Again")
+//            Log.d("product repo", "sub categories: $e")
         }
 
 
-
     }
 
 
 
+    suspend fun consumeProduct(barcode: String, size: Float, token: String):Resource<ConsumeProductResponse>{
 
-    suspend fun GetConsumedWeekData(week: String,token:String){
+        try {
 
-        ConsumedWeekData.emit(Resource.Loading())
+            val response = productApi.consumeProduct(token, barcode, ConsumeProductSend(size))
 
-        try{
+            return if (response.body()!!.success && response.body() != null) {
 
-            val response = ProductApi.getWeekData(token,week)
+                Resource.Success(response.body()!!.data)
 
-            if(response.body()!!.success && response.body() != null){
+            } else{
 
-                ConsumedWeekData.emit(Resource.Success(response.body()!!.data))
+                Resource.Error(extractErrorMessage(response))
 
-            }else{
+            }
+        } catch (e: Exception){
+
+            return Resource.Error("Oops! Try Again")
+//            Log.d("product repo", "Consume Product: $e")
+        }
+
+    }
+
+
+    suspend fun getConsumedWeekData(week: String, token: String):Resource<ConsumedWeekDataResponse>{
+
+
+        try {
+
+            val response = productApi.getWeekData(token, week)
+
+            return if (response.body()!!.success && response.body() != null) {
+
+                 Resource.Success(response.body()!!.data)
+
+            } else {
 
                 val errorBody = response.errorBody()?.string()
                 val errorResponse = errorBody.let {
-                    Gson().fromJson(it,ErrorResponse::class.java)
+                    Gson().fromJson(it, ErrorResponse::class.java)
                 }
 
-                ConsumedWeekData.emit(Resource.Error(errorResponse.message))
+                return Resource.Error(errorResponse.message)
 
             }
 
+        } catch (e: Exception) {
 
-        }catch (e:Exception){
 
-
-            ConsumedWeekData.emit(Resource.Error("Oops! Try Again"))
+            return Resource.Error("Oops! Try Again")
 
 //            Log.d("product repo", "Consume Week Data Product: $e")
 
@@ -538,43 +433,30 @@ try {
         }
 
 
-
     }
 
 
 
+    suspend fun getConsumedDayData(token: String, day: String):Resource<ConsumedDayDataResponse>{
 
 
+        try {
 
+            val response = productApi.getDayData(token, day)
 
+            return if (response.body()!!.success && response.body() != null) {
 
-    suspend fun GetConsumedDayData(token: String,day:String){
+                Resource.Success(response.body()!!.data)
 
-        ConsumedDayData.emit(Resource.Loading())
+            } else {
 
-        try{
-
-            val response = ProductApi.getDayData(token,day)
-
-            if(response.body()!!.success && response.body() != null) {
-
-                ConsumedDayData.emit(Resource.Success(response.body()!!.data))
-
-            }else{
-
-                val errorBody = response.errorBody()?.string()
-                val errorResponse = errorBody.let {
-                    Gson().fromJson(it,ErrorResponse::class.java)
-                }
-
-                ConsumedDayData.emit(Resource.Error(errorResponse.message))
-
+                Resource.Error(extractErrorMessage(response))
 
             }
 
-        }catch (e : Exception){
+        }catch (e: Exception) {
 
-            ConsumedDayData.emit(Resource.Error("Oops! Try Again"))
+           return Resource.Error("Oops! Try Again")
 //            Log.d("product repo", "Consume Product: $e")
 
         }
@@ -583,37 +465,25 @@ try {
     }
 
 
-
-
-    suspend fun DeleteConsumedProduct(token: String,barcode: String){
-
-        DeleteConsumedProduct.emit(Resource.Loading())
+    suspend fun deleteConsumedProduct(token: String, barcode: String):Resource<ConsumeProductResponse>{
 
         try {
 
-            val response = ProductApi.DeleteConsumeProduct(token, barcode)
+            val response = productApi.DeleteConsumeProduct(token, barcode)
 
-            if(response.body()!!.success && response.body() != null) {
+            return if (response.body()!!.success && response.body() != null) {
 
-                DeleteConsumedProduct.emit(Resource.Success(response.body()!!.data))
+                Resource.Success(response.body()!!.data)
 
-                delay(500)
 
-                DeleteConsumedProduct.emit(Resource.Nothing())
+            } else {
 
-            }else{
-
-                val errorBody = response.errorBody()?.string()
-                val errorResponse = errorBody.let {
-                    Gson().fromJson(it,ErrorResponse::class.java)
-                }
-
-                DeleteConsumedProduct.emit(Resource.Error(errorResponse.message))
+                Resource.Error(extractErrorMessage(response))
 
             }
-        }catch (e:Exception){
+        } catch (e: Exception) {
 
-            DeleteConsumedProduct.emit(Resource.Error("Oops! Try Again"))
+            return Resource.Error("Oops! Try Again")
 //            Log.d("product repo", "Delete Product: $e")
 
         }
@@ -622,90 +492,32 @@ try {
     }
 
 
+    suspend fun getConsumeMonthData(token: String, month: String):Resource<ConsumedMonthDataResponse>{
 
-
-    suspend fun GetMonthData(token: String,month:String){
-
-
-        ConsumedMonthData.emit(Resource.Loading())
 
         try {
 
-            val response = ProductApi.getMonthData(token,month)
+            val response = productApi.getMonthData(token, month)
 
-            if(response.body()!!.success && response.body() != null){
+            return if (response.body()!!.success && response.body() != null) {
 
-                ConsumedMonthData.emit(Resource.Success(response.body()!!.data))
+                Resource.Success(response.body()!!.data)
 
 
-            }else{
+            } else {
 
-                val errorBody = response.errorBody()?.string()
-                val errorResponse = errorBody.let {
-                    Gson().fromJson(it,ErrorResponse::class.java)
-                }
-
-                ConsumedMonthData.emit(Resource.Error(errorResponse.message))
+                return Resource.Error(extractErrorMessage(response))
 
             }
 
-        }catch (e:Exception){
+        } catch (e: Exception) {
 
-            ConsumedMonthData.emit(Resource.Error("Oops! Try Again"))
+            return Resource.Error("Oops! Try Again")
 //            Log.d("product repo", "Month Data: $e")
-
         }
 
 
     }
-
-
-
-
-
-    suspend fun GetSubCategory(category: String,){
-
-        SubCategoryData.emit(Resource.Loading())
-
-        try {
-
-            val response = ProductApi.getSubCategories(category)
-
-            if(response.body()!!.success && response.body() != null) {
-
-                SubCategoryData.emit(Resource.Success(response.body()!!.data))
-            }else{
-
-                val errorBody = response.errorBody()?.string()
-                val errorResponse = errorBody.let {
-                    Gson().fromJson(it,ErrorResponse::class.java)
-                }
-
-                SubCategoryData.emit(Resource.Error(errorResponse.message))
-
-            }
-        }catch (e:Exception){
-
-            SubCategoryData.emit(Resource.Error("Oops! Try Again"))
-//            Log.d("product repo", "sub categories: $e")
-
-        }
-
-
-    }
-
-
-
-    suspend fun clearAlternativeProductList(){
-        AlternateProductData.emit(Resource.Nothing())
-    }
-
-
-
-
-
-
-
 
 
 

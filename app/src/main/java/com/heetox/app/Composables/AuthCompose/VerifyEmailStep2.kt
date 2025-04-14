@@ -33,7 +33,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.heetox.app.Model.Authentication.VerifyEmailSend
-import com.heetox.app.ViewModel.Authentication.AuthenticationViewModel
 import com.heetox.app.ui.theme.HeetoxDarkGray
 import com.heetox.app.ui.theme.HeetoxDarkGreen
 import com.heetox.app.ui.theme.HeetoxGreen
@@ -41,7 +40,7 @@ import com.heetox.app.ui.theme.HeetoxWhite
 
 
 @Composable
-fun VerifyEmailStep2(viewmodel : AuthenticationViewModel,token :String, email : String, error:String){
+fun VerifyEmailStep2(verifyEmail:(String,VerifyEmailSend)->Unit,token :String, email : String, error:String){
 
     val scrollState = rememberScrollState()
 
@@ -162,7 +161,7 @@ Box(
 
                         }else{
 
-                            viewmodel.verifyotp(token, VerifyEmailSend(
+                            verifyEmail(token, VerifyEmailSend(
                                 email,otp
                             ))
 

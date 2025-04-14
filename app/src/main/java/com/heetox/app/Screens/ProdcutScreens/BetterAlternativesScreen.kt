@@ -32,13 +32,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.heetox.app.Composables.ProductCompose.ProductCard
+import com.heetox.app.Model.Authentication.LocalStoredData
 import com.heetox.app.Utils.Resource
-import com.heetox.app.ViewModel.Authentication.AuthenticationViewModel
-import com.heetox.app.ViewModel.ProductsVM.ProductsViewModel
+import com.heetox.app.ViewModel.ProductsVM.ProductListViewModel
 import com.heetox.app.ui.theme.HeetoxBrightGreen
 import com.heetox.app.ui.theme.HeetoxDarkGray
 import com.heetox.app.ui.theme.HeetoxDarkGreen
@@ -48,20 +49,19 @@ import com.heetox.app.ui.theme.HeetoxWhite
 
 @SuppressLint("MutableCollectionMutableState")
 @Composable
-fun BetterAlternativesScreen(category: String,
-                             subCategory :String,
-                             AuthVM: AuthenticationViewModel,
-                             ProductVM: ProductsViewModel,
-                             navController: NavHostController
+fun BetterAlternativesScreen(
+    subCategory :String,
+    navController: NavHostController,
+    userData : LocalStoredData?
 ){
 
+    val productListVM: ProductListViewModel = hiltViewModel()
 
     val context = LocalContext.current
 
-    val userData = AuthVM.Localdata.collectAsState()
-    val token = userData.value?.Token ?: ""
+    val token = userData?.Token ?: ""
 
-    val allProducts = ProductVM.AlternativeProductData.collectAsState()
+    val allProducts = productListVM.alternativeProductData.collectAsState()
     var dataList by remember { mutableStateOf(allProducts.value.data) }
 
 
@@ -75,7 +75,7 @@ fun BetterAlternativesScreen(category: String,
 
     SwipeRefresh(state = swipeRefreshState, onRefresh = {
 //        ProductVM.getSubCategory(category) // Trigger refresh
-        ProductVM.getalternativeproducts(subCategory,token)
+        productListVM.getAlternativeProducts(subCategory,token)
 
     }) {
 
@@ -189,8 +189,8 @@ fun BetterAlternativesScreen(category: String,
 
                                 ProductCard(
                                     data = data,
-                                    ProductVM = ProductVM,
-                                    UserData = userData,
+//                                    ProductVM = ProductVM,
+                                    userData = userData,
                                     context = context,
                                     navController = navController,
                                     isLiked = isLiked,
@@ -219,7 +219,7 @@ fun BetterAlternativesScreen(category: String,
     }
 
     LaunchedEffect(key1 = subCategory) {
-        ProductVM.getalternativeproducts(subCategory,token)
+        productListVM.getAlternativeProducts(subCategory,token)
     }
 
     // Handle product list loading and errors
@@ -236,10 +236,10 @@ fun BetterAlternativesScreen(category: String,
             }
             is Resource.Success -> {
                 loadingSubcategoriesList = false
-                if (allProducts.value.data.isNullOrEmpty()) {
-                    dataList = null
+                dataList = if (allProducts.value.data.isNullOrEmpty()) {
+                    null
                 } else {
-                    dataList = allProducts.value.data
+                    allProducts.value.data
                 }
             }
             else -> {

@@ -1,6 +1,5 @@
 package com.heetox.app.Composables.ProductCompose
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -24,12 +23,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardDoubleArrowRight
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -38,10 +37,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -51,26 +48,27 @@ import coil.compose.AsyncImage
 import com.heetox.app.Composables.GeneralCompose.LogoAndSearchBar
 import com.heetox.app.Model.Product.MostScannedResponse
 import com.heetox.app.R
+import com.heetox.app.Utils.Action
 import com.heetox.app.Utils.Resource
-import com.heetox.app.ViewModel.ProductsVM.ProductsViewModel
+import com.heetox.app.Utils.UiEvent
+import com.heetox.app.ui.theme.HeetoxBrightGreen
 import com.heetox.app.ui.theme.HeetoxDarkGray
 import com.heetox.app.ui.theme.HeetoxDarkGreen
 import com.heetox.app.ui.theme.HeetoxLightGray
 import com.heetox.app.ui.theme.HeetoxWhite
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 
 
 @Composable
-fun MostScannedProductsSix(navController : NavHostController,ProductVM : ProductsViewModel){
+fun MostScannedProductsSix(navController : NavHostController,productData: Resource<List<MostScannedResponse>>,uiEvent:Flow<UiEvent>){
+
+    val productList = productData.data
+    val firstSixProduct = productList?.take(6)
 
 
-    var productdata = ProductVM.MostScannedProductsData.collectAsState()
-    var productlist = productdata.value.data
-    val firstsixproduct = productlist?.take(6)
-
-
-    var Loading by rememberSaveable {
-        mutableStateOf(true)
+    var loading by rememberSaveable {
+        mutableStateOf(false)
     }
 
     var error by rememberSaveable {
@@ -101,7 +99,7 @@ fun MostScannedProductsSix(navController : NavHostController,ProductVM : Product
     }
 
 
-  if(Loading || error.isNotEmpty()){
+  if(loading || error.isNotEmpty()){
 
       var degree by remember { mutableStateOf(0) }
 
@@ -120,11 +118,10 @@ fun MostScannedProductsSix(navController : NavHostController,ProductVM : Product
           ){
 
 
-             if (Loading){
-                 Image(painter = painterResource(id = R.drawable.loadingcircle), contentDescription = "",
-                     modifier = Modifier
-                         .size(30.dp)
-                         .rotate(degree.toFloat()),
+             if (loading){
+                 CircularProgressIndicator(
+                     modifier = Modifier.size(30.dp),
+                     color = HeetoxBrightGreen
                  )
              }else{
 
@@ -156,22 +153,22 @@ fun MostScannedProductsSix(navController : NavHostController,ProductVM : Product
           horizontalAlignment = Alignment.CenterHorizontally
 
       ) {
-        if (firstsixproduct != null) {
-            if(firstsixproduct.size != 0){
+        if (firstSixProduct != null) {
+            if(firstSixProduct.isNotEmpty()){
                 for (rowIndex in 0 until 3) { // 3 rows
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                     ) {
                         for (colIndex in 0 until 2) { // 2 columns
                             val itemIndex = rowIndex * 2 + colIndex
-                            if (itemIndex <firstsixproduct!!.size) {
+                            if (itemIndex < firstSixProduct.size) {
                                 Box(
                                     modifier = Modifier
                                         .weight(1f)
                                 ) {
-                                    MostScannedProductsCard(firstsixproduct[itemIndex]){
+                                    MostScannedProductsCard(firstSixProduct[itemIndex]){
 
-                                        navController.navigate("productdetails/${firstsixproduct[itemIndex].product_barcode}")
+                                        navController.navigate("productdetails/${firstSixProduct[itemIndex].product_barcode}")
 
                                     }
                                 }
@@ -215,34 +212,62 @@ fun MostScannedProductsSix(navController : NavHostController,ProductVM : Product
 
   }
 
+    LaunchedEffect(uiEvent){
+        uiEvent.collect { event ->
+            when (event) {
+                is UiEvent.Loading -> {
+                    if (event.action == Action.MostScanned) {
+                        loading = true
+                        error = "Just a second ;)"
+                    }
+                }
 
+                is UiEvent.Success -> {
+                    if (event.action == Action.MostScanned) {
+                        loading = false
+                        error = ""
+                    }
+                }
 
-    LaunchedEffect(key1 = productdata.value) {
+                is UiEvent.Error -> {
+                    if (event.action == Action.MostScanned) {
+                        loading = false
+                        error = event.message
+                    }
+                }
 
-        when(productdata.value){
-
-            is Resource.Error -> {
-                error = "oops! Couldn't Load :("
-                Loading = false
-            }
-
-            is Resource.Loading -> {
-                error = " Just a second ;) "
-                Loading = true
-            }
-
-            is Resource.Nothing -> {
-
-            }
-
-            is Resource.Success -> {
-                Loading = false
-                error = ""
+                UiEvent.Idle -> Unit
             }
         }
-
-
     }
+
+//
+//    LaunchedEffect(key1 = productData) {
+//
+//        when(productData){
+//
+//            is Resource.Error -> {
+//                error = "oops! Couldn't Load :("
+//                loading = false
+//            }
+//
+//            is Resource.Loading -> {
+//                error = " Just a second ;) "
+//                loading = true
+//            }
+//
+//            is Resource.Nothing -> {
+//
+//            }
+//
+//            is Resource.Success -> {
+//                loading = false
+//                error = ""
+//            }
+//        }
+//
+//
+//    }
 
 }
 

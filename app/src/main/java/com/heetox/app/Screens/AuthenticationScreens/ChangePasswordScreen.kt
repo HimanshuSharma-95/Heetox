@@ -19,7 +19,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -33,35 +32,38 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.heetox.app.Composables.AuthCompose.LoadingOverlay
 import com.heetox.app.Composables.AuthCompose.PasswordInput
 import com.heetox.app.Model.Authentication.ChangePasswordSend
-import com.heetox.app.Utils.Resource
-import com.heetox.app.ViewModel.Authentication.AuthenticationViewModel
+import com.heetox.app.Model.Authentication.LocalStoredData
+import com.heetox.app.Utils.Action
+import com.heetox.app.Utils.UiEvent
 import com.heetox.app.ui.theme.HeetoxDarkGreen
 import com.heetox.app.ui.theme.HeetoxGreen
 import com.heetox.app.ui.theme.HeetoxWhite
+import kotlinx.coroutines.flow.Flow
 
 
 @Composable
-fun ChangePasswordScreen(navContorller : NavHostController){
+fun ChangePasswordScreen(navController : NavHostController,
+                         userData : LocalStoredData?,
+                         changePassword: (String,ChangePasswordSend) -> Unit,
+                         uiEvent:Flow<UiEvent>
+
+){
 
 
-    val viewmodel : AuthenticationViewModel = hiltViewModel()
-    val LocalData = viewmodel.Localdata.collectAsState()
-    val ChangePasswordData = viewmodel.ChangePasswordData.collectAsState()
     val context = LocalContext.current
     val scrollState = rememberScrollState()
 
 
-    var oldpassword by rememberSaveable {
+    var oldPassword by rememberSaveable {
         mutableStateOf("")
     }
 
 
-    var newpassword by rememberSaveable {
+    var newPassword by rememberSaveable {
         mutableStateOf("")
     }
 
@@ -73,14 +75,12 @@ fun ChangePasswordScreen(navContorller : NavHostController){
         mutableStateOf(false)
     }
 
-    var token by rememberSaveable {
-
-        mutableStateOf(LocalData.value!!.Token)
-
+    val token by rememberSaveable {
+        mutableStateOf(userData!!.Token)
     }
 
 
-if(loading == true){
+if(loading){
 
     LoadingOverlay(isLoading = loading)
 
@@ -148,9 +148,9 @@ if(loading == true){
                    )
 
 
-                   PasswordInput(label ="Old Password" , password = oldpassword , onPasswordChange ={oldpassword = it} )
+                   PasswordInput(label ="Old Password" , password = oldPassword , onPasswordChange ={oldPassword = it} )
 
-                   PasswordInput(label ="New Password" , password = newpassword , onPasswordChange ={newpassword = it} )
+                   PasswordInput(label ="New Password" , password = newPassword , onPasswordChange ={newPassword = it} )
 
 
                    Spacer(modifier = Modifier
@@ -159,15 +159,15 @@ if(loading == true){
 
                    Button(onClick = {
 
-                       if(oldpassword.length < 8 || newpassword.length < 8){
+                       if(oldPassword.length < 8 || newPassword.length < 8){
                            error = "Password minimum of 8 Characters"
                        }else{
 
                            token?.let {
-                               viewmodel.changepassword(
+                               changePassword(
                                    it, ChangePasswordSend(
-                                       oldpassword,
-                                       newpassword
+                                       oldPassword,
+                                       newPassword
                                    )
                                )
                            }
@@ -216,44 +216,35 @@ if(loading == true){
 }
 
 
-    LaunchedEffect(key1 = ChangePasswordData.value) {
+    LaunchedEffect(Unit) {
+        uiEvent.collect { event ->
+            when (event) {
+                is UiEvent.Loading -> {
+                    if (event.action == Action.ChangePassword) {
+                        loading = true
+                        error = "Changing password..."
+                    }
+                }
 
-        when(ChangePasswordData.value){
+                is UiEvent.Success -> {
+                    if (event.action == Action.ChangePassword) {
+                        loading = false
+                        error = "Password Changed"
+                        Toast.makeText(context, "Password Changed", Toast.LENGTH_SHORT).show()
+                        navController.navigate("profile")
+                    }
+                }
 
-            is Resource.Error -> {
+                is UiEvent.Error -> {
+                    if (event.action == Action.ChangePassword) {
+                        loading = false
+                        error = event.message
+//                        Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+                    }
+                }
 
-                loading = false
-                error = ChangePasswordData.value.error.toString()
-
+                is UiEvent.Idle -> {}
             }
-            is Resource.Loading -> {
-                error = "Loading.."
-                loading = true
-            }
-            is Resource.Nothing -> {
-
-                loading = false
-                error = ""
-
-            }
-            is Resource.Success -> {
-
-                error = "Password Changed"
-                loading = false
-                navContorller.navigate("profile")
-
-Toast.makeText(context,"Password Changed",Toast.LENGTH_SHORT).show()
-
-
-            }
-
         }
-
     }
-
-
-
-
-
-
-        }
+}

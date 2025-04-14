@@ -31,7 +31,7 @@ import com.heetox.app.ui.theme.HeetoxGreen
 
 
 @Composable
-fun TextAndScanHome(navcontoller : NavHostController,name : String? = null){
+fun TextAndScanHome(navController : NavHostController, name : String? = null){
 
     Row(
         modifier = Modifier
@@ -94,7 +94,7 @@ fun TextAndScanHome(navcontoller : NavHostController,name : String? = null){
                 .clip(RoundedCornerShape(20.dp))
                 .background(HeetoxGreen)
                 .clickable {
-navcontoller.navigate("scan")
+               navController.navigate("scan")
                 }
             ,
             verticalArrangement = Arrangement.Center,

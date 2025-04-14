@@ -20,11 +20,14 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.heetox.app.Composables.ProductCompose.ProductByBarcodeDetails
+import com.heetox.app.Model.Authentication.LocalStoredData
 import com.heetox.app.R
-import com.heetox.app.Utils.Resource
-import com.heetox.app.ViewModel.Authentication.AuthenticationViewModel
+import com.heetox.app.Utils.Action
+import com.heetox.app.Utils.UiEvent
+import com.heetox.app.ViewModel.ProductsVM.ConsumeViewModel
 import com.heetox.app.ViewModel.ProductsVM.ProductsViewModel
 import com.heetox.app.ui.theme.HeetoxDarkGray
 import com.heetox.app.ui.theme.HeetoxWhite
@@ -32,36 +35,37 @@ import kotlinx.coroutines.delay
 
 
 @Composable
-fun ProductDataScreen(barcode : String ,ProductVM : ProductsViewModel, AuthVM : AuthenticationViewModel,navController: NavHostController){
+fun ProductDataScreen(barcode : String,userData:LocalStoredData?, navController: NavHostController){
 
 
-    val ProductDetails = ProductVM.ProductByBarcodeData.collectAsState()
-    val UserData = AuthVM.Localdata.collectAsState()
+    val productVM :ProductsViewModel = hiltViewModel()
+
+    val productDetails = productVM.productByBarcodeData.collectAsState()
+
+    val consumeVM : ConsumeViewModel = hiltViewModel()
+    val consumeProductData = consumeVM.consumeProductData.collectAsState().value
 
     val token by rememberSaveable {
-        mutableStateOf(UserData.value?.Token)
+        mutableStateOf(userData?.Token)
     }
 
     var error by rememberSaveable {
         mutableStateOf("")
     }
 
-    var Loading by rememberSaveable {
+    var loading by rememberSaveable {
         mutableStateOf(true)
     }
 
-    var Barcode by rememberSaveable {
+    val receivedBarcode by rememberSaveable {
         mutableStateOf(barcode)
     }
-
-
 
 
     var isApiCalled by rememberSaveable { mutableStateOf(false) }
 
 
-
-    if(Loading || error.isNotEmpty()){
+    if(loading || error.isNotEmpty()){
 
         var degree by rememberSaveable { mutableStateOf(0) }
 
@@ -76,7 +80,7 @@ fun ProductDataScreen(barcode : String ,ProductVM : ProductsViewModel, AuthVM : 
         ){
 
 
-            if (Loading){
+            if (loading){
                 Image(painter = painterResource(id = R.drawable.loadingcircle), contentDescription = "",
                     modifier = Modifier
                         .size(40.dp)
@@ -105,7 +109,19 @@ fun ProductDataScreen(barcode : String ,ProductVM : ProductsViewModel, AuthVM : 
 
     }else{
 
-        ProductDetails.value.data?.let { ProductByBarcodeDetails(Details = it,AuthVM,ProductVM,navController) }
+        productDetails.value.data?.let {
+            ProductByBarcodeDetails(details = it,
+                userData = userData,
+                navController = navController,
+                likeUnlike = { barcode, token ->
+                    productVM.likeUnlikeProduct(barcode, token)
+                },
+                consumeProduct = {token,barcode,size ->
+                    consumeVM.consumeProduct(token,barcode,size)
+                },
+                consumeProductData = consumeProductData,
+                uiEvents = consumeVM.uiEvent
+            ) }
 
 
 
@@ -113,49 +129,48 @@ fun ProductDataScreen(barcode : String ,ProductVM : ProductsViewModel, AuthVM : 
 
 
 
-    LaunchedEffect(key1 = Barcode) {
-
-//        if (!isApiCalled) {
+    LaunchedEffect(key1 = receivedBarcode) {
 
           if(token != null){
-              ProductVM.getproductbybarcode(barcode, token!!)
+              productVM.getProductByBarcode(barcode, token!!)
           }else{
-              ProductVM.getproductbybarcode(barcode, "")
+              productVM.getProductByBarcode(barcode, "")
           }
 
             isApiCalled = true
-//        }
 
     }
 
 
+    LaunchedEffect(Unit) {
 
-LaunchedEffect(key1 = ProductDetails.value) {
+        productVM.uiEvent.collect { event ->
+            when (event) {
+                is UiEvent.Loading -> {
+                    if (event.action == Action.ProductByBarcode) {
+                        loading = true
+                        error = "Just a second ;)"
+                    }
+                }
 
-    when(ProductDetails.value){
+                is UiEvent.Success -> {
+                    if (event.action == Action.ProductByBarcode) {
+                        loading = false
+                        error = ""
+                    }
+                }
 
-        is Resource.Error -> {
-            error = "oops! Couldn't Load Product :("
-            Loading = false
+                is UiEvent.Error -> {
+                    if (event.action == Action.ProductByBarcode) {
+                        loading = false
+                        error = event.message
+                    }
+                }
+
+                UiEvent.Idle -> Unit
+            }
         }
-
-        is Resource.Loading -> {
-            error = " Just a second ;) "
-            Loading = true
-        }
-
-        is Resource.Nothing -> {
-
-        }
-
-        is Resource.Success -> {
-            Loading = false
-            error = ""
-        }
-
     }
-
-}
 
 
 }

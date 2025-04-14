@@ -26,8 +26,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -48,8 +48,8 @@ import androidx.paging.compose.items
 import coil.compose.AsyncImage
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+import com.heetox.app.Model.Authentication.LocalStoredData
 import com.heetox.app.Model.Post.Post
-import com.heetox.app.ViewModel.Authentication.AuthenticationViewModel
 import com.heetox.app.ViewModel.PostVM.PostsViewModel
 import com.heetox.app.ui.theme.HeetoxDarkGray
 import com.heetox.app.ui.theme.HeetoxDarkGreen
@@ -58,26 +58,31 @@ import kotlinx.coroutines.delay
 
 
 @Composable
-fun Postscreen(PostVM: PostsViewModel, AuthVM: AuthenticationViewModel) {
+fun PostScreen(postVM: PostsViewModel,userData:LocalStoredData?) {
 
-
-    val lazyPagingItems = PostVM.currentResult?.collectAsLazyPagingItems()
+    val lazyPagingItems = postVM.currentResult?.collectAsLazyPagingItems()
     val listState = rememberLazyListState()
-    val token = AuthVM.Localdata.collectAsState().value?.Token ?: ""
+
+    val token = userData?.Token ?: ""
+
     val context = LocalContext.current
 
 
-//    val AllandBook = listOf("All Posts","BookMarked")
+//    val allAndBook = listOf("All Posts","BookMarked")
 //
-//    var AllandBookSelectedIndex by rememberSaveable {
+//    var allAndBookSelectedIndex by rememberSaveable {
 //
 //        mutableIntStateOf(0)
 //
 //    }
 
+    //save token in viewModel
+    LaunchedEffect(Unit){
+
+    }
 
     LaunchedEffect(lazyPagingItems?.itemCount) {
-        listState.scrollToItem(PostVM.scrollIndex, PostVM.scrollOffset)
+        listState.scrollToItem(postVM.scrollIndex, postVM.scrollOffset)
 //        Log.d("==>", "Restored scroll position: Index=${PostVM.scrollIndex}, Offset=${PostVM.scrollOffset}")
     }
 
@@ -87,26 +92,22 @@ fun Postscreen(PostVM: PostsViewModel, AuthVM: AuthenticationViewModel) {
         snapshotFlow { listState.firstVisibleItemIndex to listState.firstVisibleItemScrollOffset }
             .collect { (index, offset) ->
                 if (index != 0 || offset != 0) {
-                    PostVM.saveScrollPosition(index, offset)
+                    postVM.saveScrollPosition(index, offset)
 //                    Log.d("==>", "Saved scroll position: Index=$index, Offset=$offset")
                 }
             }
     }
 
-    val swiperefreshstate = rememberSwipeRefreshState(isRefreshing = false)
+    val swipeRefreshState = rememberSwipeRefreshState(isRefreshing = false)
 
 
 
 
-
-
-
-
-    SwipeRefresh(state = swiperefreshstate, onRefresh = {
+    SwipeRefresh(state = swipeRefreshState, onRefresh = {
         lazyPagingItems?.refresh()
-        swiperefreshstate.isRefreshing = true
+        swipeRefreshState.isRefreshing = true
 
-        PostVM.saveScrollPosition(0,0)
+        postVM.saveScrollPosition(0,0)
     }) {
 
 
@@ -149,9 +150,9 @@ fun Postscreen(PostVM: PostsViewModel, AuthVM: AuthenticationViewModel) {
 
 
 
-                        var postState = PostVM.getPostState(post._id)
+                        var postState = postVM.getPostState(post._id)
                         var isLiked by remember { mutableStateOf( if(token.isEmpty()) false else postState.isLiked ) }
-                        var likeCount by remember { mutableStateOf(if(token.isEmpty()) postState.likeCount else postState.likeCount) }
+                        var likeCount by remember { mutableIntStateOf(if(token.isEmpty()) postState.likeCount else postState.likeCount) }
                         var isBookmarked by remember { mutableStateOf(if(token.isEmpty()) false else postState.isBookmarked  ) }
 
 
@@ -168,9 +169,9 @@ fun Postscreen(PostVM: PostsViewModel, AuthVM: AuthenticationViewModel) {
                                      }else{
                                          likeCount = if (newLikeState) likeCount + 1 else likeCount - 1
                                          isLiked = newLikeState
-                                         PostVM.updatePostState(post._id, isLiked, isBookmarked, likeCount)
-                                         PostVM.likedislikepost(token, post._id)
-                                         postState = PostVM.getPostState(it._id)
+                                         postVM.updatePostState(post._id, isLiked, isBookmarked, likeCount)
+                                         postVM.likeDislikePost(token, post._id)
+                                         postState = postVM.getPostState(it._id)
                                      }
 
                             },
@@ -182,14 +183,14 @@ fun Postscreen(PostVM: PostsViewModel, AuthVM: AuthenticationViewModel) {
 
                                 }else {
                                     isBookmarked = !isBookmarked
-                                    PostVM.updatePostState(
+                                    postVM.updatePostState(
                                         post._id,
                                         isLiked,
                                         isBookmarked,
                                         likeCount
                                     )
-                                    PostVM.bookmarkpost(post._id,token)
-                                    postState = PostVM.getPostState(post._id)
+                                    postVM.bookMarkPost(post._id,token)
+                                    postState = postVM.getPostState(post._id)
                                 }
                             },
                             isLiked = isLiked,
@@ -238,7 +239,7 @@ fun Postscreen(PostVM: PostsViewModel, AuthVM: AuthenticationViewModel) {
                                 color = HeetoxDarkGray
                             )
                         }
-                        swiperefreshstate.isRefreshing = false
+                        swipeRefreshState.isRefreshing = false
                     }
 
                     // Error during initial load
@@ -260,7 +261,7 @@ fun Postscreen(PostVM: PostsViewModel, AuthVM: AuthenticationViewModel) {
                                 )
                             }
                         }
-                        swiperefreshstate.isRefreshing = false
+                        swipeRefreshState.isRefreshing = false
                     }
 
 
@@ -285,7 +286,7 @@ fun Postscreen(PostVM: PostsViewModel, AuthVM: AuthenticationViewModel) {
 
                     // Initial load finished, and no errors
                     items.loadState.refresh is LoadState.NotLoading && items.itemCount > 0 -> {
-                        swiperefreshstate.isRefreshing = false
+                        swipeRefreshState.isRefreshing = false
                     }
 
                     // No items available
@@ -307,7 +308,7 @@ fun Postscreen(PostVM: PostsViewModel, AuthVM: AuthenticationViewModel) {
                             }
                         }
 
-                        swiperefreshstate.isRefreshing = false
+                        swipeRefreshState.isRefreshing = false
                     }
                 }
 
@@ -315,14 +316,6 @@ fun Postscreen(PostVM: PostsViewModel, AuthVM: AuthenticationViewModel) {
         }
     }
 }
-
-
-
-
-
-
-
-
 
 
 

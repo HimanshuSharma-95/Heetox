@@ -23,8 +23,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -44,31 +42,38 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.heetox.app.Composables.AuthCompose.BaseHeading
 import com.heetox.app.Composables.AuthCompose.Input
 import com.heetox.app.Composables.AuthCompose.LoadingOverlay
 import com.heetox.app.Composables.AuthCompose.PasswordInput
-import com.heetox.app.Model.Authentication.LoginData
 import com.heetox.app.Model.Authentication.LoginSend
-import com.heetox.app.Utils.Resource
+import com.heetox.app.Utils.Action
+import com.heetox.app.Utils.UiEvent
 import com.heetox.app.Utils.rememberImeState
-import com.heetox.app.ViewModel.Authentication.AuthenticationViewModel
 import com.heetox.app.ui.theme.HeetoxDarkGray
 import com.heetox.app.ui.theme.HeetoxDarkGreen
 import com.heetox.app.ui.theme.HeetoxGreen
 import com.heetox.app.ui.theme.HeetoxWhite
+import kotlinx.coroutines.flow.Flow
 
 @Composable
-fun LoginScreen(navController: NavHostController){
+fun LoginScreen(navController: NavHostController,
+                uiEvent: Flow<UiEvent>,
+                loginUser: (LoginSend) -> Unit){
 
 Column(
-    modifier = androidx.compose.ui.Modifier
+    modifier = Modifier
         .background(HeetoxGreen)
 ){
-    LoginInputs(navController)
-    Spacer(modifier = androidx.compose.ui.Modifier
+    LoginInputs(navController,
+        uiEvent,
+        login = {
+        loginUser(it)
+    }
+    )
+
+    Spacer(modifier = Modifier
         .fillMaxSize()
         .background(HeetoxWhite)
     ) }
@@ -76,15 +81,14 @@ Column(
 
 
 @Composable
-fun LoginInputs(navController: NavHostController){
+fun LoginInputs(navController: NavHostController, uiEvent: Flow<UiEvent>, login:(LoginSend)->Unit){
 
-    val viewmodel : AuthenticationViewModel = hiltViewModel()
-    val data : State<Resource<LoginData>> = viewmodel.Loginuserdata.collectAsState()
     var error by rememberSaveable { mutableStateOf("") }
     var email by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
     var loading by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
+
 
 if(loading){
 
@@ -256,7 +260,7 @@ if(loading){
                         else{
 
                             error = ""
-                            viewmodel.loginUser(LoginSend(
+                            login(LoginSend(
                                 email,password
                             ))
 
@@ -284,51 +288,32 @@ if(loading){
 }
 
 
-
-    //if user directly logs in without register
-    LaunchedEffect(key1 = data.value) {
-
-        when(data.value){
-
-            is Resource.Nothing -> {}
-
-            is Resource.Loading -> {
-                error = "Loading..."
-                loading = true
-            }
-
-            is Resource.Success -> {
-
-                loading = false
-                error="Login Done"
-                navController.navigate("home")
-                Toast.makeText(context,"Logined",Toast.LENGTH_SHORT).show()
-
-
-//                viewmodel.savetoken(LocalStoredData(
-//                    true,
-//                    data.value.data?.accesstoken,
-//                    data.value.data?.user!!.fullname,
-//                    data.value.data?.user!!.email,
-//                    false,
-//                    data.value.data?.user!!.age,
-//                    data.value.data?.user!!.phone_number
-//                ))
-//                viewmodel.gettoken()
-
-            }
-
-            is Resource.Error -> {
-                loading = false
-                error = data.value.error.toString()
-            }
-
-        }
-
-    }
-
-
-
-
+    LaunchedEffect(Unit) {
+       uiEvent.collect { event ->
+            when (event) {
+                is UiEvent.Error -> {
+                    if (event.action == Action.Login) {
+                        loading = false
+                        error = event.message
+                    }
+                }
+                UiEvent.Idle -> {}
+                is UiEvent.Loading -> {
+                    if (event.action == Action.Login) {
+                        loading = true
+                        error = "Logging in..."
+                    }
+                }
+                is UiEvent.Success -> {
+                    if (event.action == Action.Login) {
+                        loading = false
+                        error = ""
+                        Toast.makeText(context, "Logged in", Toast.LENGTH_SHORT).show()
+                        navController.navigate("home") {
+                            popUpTo("home") { inclusive = true }
+                        }
+                    }
+                }
+            }}}
 
 }

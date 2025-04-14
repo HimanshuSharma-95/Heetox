@@ -1,162 +1,137 @@
 package com.heetox.app.ViewModel.ProductsVM
 
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.heetox.app.Model.Product.AlternateResponseItem
-import com.heetox.app.Model.Product.CategoriesResponse
 import com.heetox.app.Model.Product.CheckBarcodeResponse
-import com.heetox.app.Model.Product.ConsumeProductResponse
-import com.heetox.app.Model.Product.ConsumedDayDataResponse
-import com.heetox.app.Model.Product.ConsumedMonthDataResponse
-import com.heetox.app.Model.Product.ConsumedWeekDataResponse
 import com.heetox.app.Model.Product.LikeUnlikeResponse
 import com.heetox.app.Model.Product.LikedProductRepsonse
-import com.heetox.app.Model.Product.MostScannedResponse
 import com.heetox.app.Model.Product.ProductbyBarcodeResponse
-import com.heetox.app.Model.Product.SubCategoriesResponse
 import com.heetox.app.Repository.ProductRepository.productRepository
+import com.heetox.app.Utils.Action
 import com.heetox.app.Utils.Resource
+import com.heetox.app.Utils.UiEvent
+import com.heetox.app.ViewModel.UiEventViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 
 @HiltViewModel
-class ProductsViewModel @Inject constructor(private val ProductRepo : productRepository ) : ViewModel(){
+class ProductsViewModel @Inject constructor(private val productRepo : productRepository ) : UiEventViewModel(){
 
 
-    val MostScannedProductsData : StateFlow<Resource<List<MostScannedResponse>>>
-        get() = ProductRepo.accessMostScannedProductData
+    private val _productByBarcodeData = MutableStateFlow<Resource<ProductbyBarcodeResponse>>(Resource.Nothing())
+       val productByBarcodeData = _productByBarcodeData.asStateFlow()
 
 
-    val CategoriesData : StateFlow<Resource<CategoriesResponse>>
-        get() = ProductRepo.accessCategoriesData
+    private val _likeUnlikeProductData = MutableStateFlow<Resource<LikeUnlikeResponse>>(Resource.Nothing())
+        val likeUnlikeProductData = _likeUnlikeProductData.asStateFlow()
 
 
-    val ProductByBarcodeData : StateFlow<Resource<ProductbyBarcodeResponse>>
-        get() = ProductRepo.accessProductByBarcodeData
-
-    val LikeUnlikeProductData : StateFlow<Resource<LikeUnlikeResponse>>
-        get() = ProductRepo.accessLikedProductData
-
-    val AlternativeProductData : StateFlow<Resource<ArrayList<AlternateResponseItem>>>
-        get() = ProductRepo.accessAlternateProduct
+    private val _checkBarcode = MutableStateFlow<Resource<CheckBarcodeResponse>>(Resource.Nothing())
+        val checkBarcode = _checkBarcode.asStateFlow()
 
 
-    val SearchData : StateFlow<Resource<ArrayList<AlternateResponseItem>>>
-        get() = ProductRepo.accessSearchData
-
-
-    val checkbarcode : StateFlow<Resource<CheckBarcodeResponse>>
-        get() = ProductRepo.accessCheckBarcodeData
-
-
-    val LikedProductsData : StateFlow<Resource<LikedProductRepsonse>>
-        get() = ProductRepo.accessGetLikedProductData
-
-    val ConsumeProductData : StateFlow<Resource<ConsumeProductResponse>>
-        get() = ProductRepo.accessConsumeProductData
-
-    val ConsumedWeekData : StateFlow<Resource<ConsumedWeekDataResponse>>
-        get() = ProductRepo.accessConsumedWeekData
-
-    val ConsumedDayData : StateFlow<Resource<ConsumedDayDataResponse>>
-        get() = ProductRepo.accessConsumedDayData
-
-
-    val DeleteConsumedProductData : StateFlow<Resource<ConsumeProductResponse>>
-        get() = ProductRepo.accessDeleteConsumedProduct
-
-
-    val ConsumedMonthData : StateFlow<Resource<ConsumedMonthDataResponse>>
-        get() = ProductRepo.accessConsumedMonthData
-
-    val SubCategoriesData : StateFlow<Resource<SubCategoriesResponse>>
-        get() = ProductRepo.accessSubCategoryData
-
-
-    private val _mainCategory = MutableStateFlow<String>("")
-    val mainCategory: StateFlow<String> = _mainCategory
-
-
-    fun setMainCategory(newSubCategory: String) {
-        _mainCategory.value = newSubCategory
-
-    }
+    private val _likedProductsData = MutableStateFlow<Resource<LikedProductRepsonse>>(Resource.Nothing())
+        val likedProductsData = _likedProductsData.asStateFlow()
 
 
 
-    private val _subcategory = MutableStateFlow<String>("")
-    val subcategory: StateFlow<String> = _subcategory
 
-
-    fun setSubcategory(newSubCategory: String) {
-            _subcategory.value = newSubCategory
-
-    }
-
-
-
-    fun getmostscannedproducts(){
+    fun getProductByBarcode(barcode : String, authorization: String){
 
         viewModelScope.launch(Dispatchers.IO){
 
-            ProductRepo.getMostScannedProducts()
+            emitUiEvent(UiEvent.Loading(Action.ProductByBarcode))
+
+            val response = productRepo.getProductByBarcode(barcode,authorization)
+
+            _productByBarcodeData.value = response
+
+            when (response) {
+                is Resource.Success -> {
+                    emitUiEvent(UiEvent.Success(Action.ProductByBarcode))
+                }
+
+                is Resource.Error -> {
+                    emitUiEvent(
+                        UiEvent.Error(
+                            response.error ?: "Couldn't Load Product",
+                            Action.ProductByBarcode
+                        )
+                    )
+                }
+
+                else -> Unit
+            }
 
         }
 
     }
 
-    fun getcategories(){
+
+    fun likeUnlikeProduct(barcode: String, authorization : String){
 
         viewModelScope.launch (Dispatchers.IO){
 
-            ProductRepo.getCategories()
+            emitUiEvent(UiEvent.Loading(Action.LikeUnlike))
+
+            val response = productRepo.likeUnlikeProduct(barcode,authorization)
+
+            _likeUnlikeProductData.value = response
+
+            when (response) {
+                is Resource.Success -> {
+                    emitUiEvent(UiEvent.Success(Action.LikeUnlike))
+                }
+
+                is Resource.Error -> {
+                    emitUiEvent(
+                        UiEvent.Error(
+                            response.error ?: "Oops! Try Again",
+                            Action.LikeUnlike
+                        )
+                    )
+                }
+
+                else -> Unit
+            }
 
         }
 
     }
 
-    fun getproductbybarcode(barcode : String,Authorization: String){
+
+    fun checkBarcode(barcode : String){
 
         viewModelScope.launch(Dispatchers.IO){
 
-            ProductRepo.getProductByBarcode(barcode,Authorization)
+//            emitUiEvent(UiEvent.Loading(Action.CheckBarcode))
 
-        }
+            _checkBarcode.value = Resource.Loading()
 
-    }
+            val response = productRepo.checkBarcode(barcode)
 
-    fun likeunlikeproduct(barcode: String,Authorization : String){
+            _checkBarcode.value = response
 
-        viewModelScope.launch (Dispatchers.IO){
-
-            ProductRepo.LikeUnlikeProduct(barcode,Authorization)
-
-        }
-
-    }
-
-
-    fun getalternativeproducts(category : String,Authorization: String){
-
-        viewModelScope.launch(Dispatchers.IO){
-
-            ProductRepo.getAlternativeProducts(category,Authorization)
-
-        }
-
-    }
-
-
-    fun searchproducts(query : String,Authorization: String){
-
-        viewModelScope.launch(Dispatchers.IO){
-
-            ProductRepo.getSearch(query,Authorization)
+//            when (response) {
+//                is Resource.Success -> {
+//                    emitUiEvent(UiEvent.Success(Action.CheckBarcode))
+//                }
+//
+//                is Resource.Error -> {
+//                    emitUiEvent(
+//                        UiEvent.Error(
+//                            response.error ?: "Couldn't Load Product",
+//                            Action.CheckBarcode
+//                        )
+//                    )
+//                }
+//
+//                else -> Unit
+//            }
 
         }
 
@@ -164,106 +139,35 @@ class ProductsViewModel @Inject constructor(private val ProductRepo : productRep
 
 
 
-    fun checkbarcode(barcode : String){
-
-        viewModelScope.launch(Dispatchers.IO){
-
-            ProductRepo.CheckBarcode(barcode)
-
-        }
-
-    }
-
-
-  fun getlikedproducts(authorization : String){
+    fun getLikedProducts(authorization : String){
 
       viewModelScope.launch(Dispatchers.IO){
 
-          ProductRepo.getLikedProducts(authorization)
+         emitUiEvent(UiEvent.Loading(Action.LikedProducts))
+
+          val response = productRepo.getLikedProducts(authorization)
+
+          _likedProductsData.value = response
+
+          when (response) {
+              is Resource.Success -> {
+                  emitUiEvent(UiEvent.Success(Action.LikedProducts))
+              }
+
+              is Resource.Error -> {
+                  emitUiEvent(
+                      UiEvent.Error(
+                          response.error ?: "Oops! Try Again",
+                          Action.LikedProducts
+                      )
+                  )
+              }
+
+              else -> Unit
+          }
 
         }
 
     }
-
-
-   fun consumeproduct(token : String,barcode:String,size:Float){
-
-     viewModelScope.launch(Dispatchers.IO){
-
-         ProductRepo.ConsumeProduct(barcode,size,token)
-
-     }
-
-
-    }
-
-
-    fun getConsumedWeekData(token:String,week:String){
-
-        viewModelScope.launch(Dispatchers.IO){
-
-            ProductRepo.GetConsumedWeekData(week,token)
-
-        }
-
-    }
-
-
-
-
-    fun getConsumedDayData(token:String,day:String){
-
-        viewModelScope.launch(Dispatchers.IO) {
-
-
-            ProductRepo.GetConsumedDayData(token,day)
-        }
-
-
-        }
-
-
-
-    fun deleteConsumedProduct(token:String,barcode:String){
-
-        viewModelScope.launch(Dispatchers.IO){
-
-            ProductRepo.DeleteConsumedProduct(token,barcode)
-        }
-
-
-    }
-
-
-
-    fun getConsumedMonthData(token:String,month:String){
-
-        viewModelScope.launch(Dispatchers.IO){
-
-            ProductRepo.GetMonthData(token,month)
-
-        }
-
-    }
-
-
-    fun getSubCategory(category : String){
-
-        viewModelScope.launch(Dispatchers.IO){
-
-            ProductRepo.GetSubCategory(category)
-
-        }
-
-    }
-
-
-    fun clearAlternativeProductList(){
-        viewModelScope.launch {
-            ProductRepo.clearAlternativeProductList()
-        }
-    }
-
-
 
 }

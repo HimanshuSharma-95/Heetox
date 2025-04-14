@@ -32,15 +32,17 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.heetox.app.Composables.GeneralCompose.SubCategoriesItem
 import com.heetox.app.Composables.ProductCompose.ProductCard
+import com.heetox.app.Model.Authentication.LocalStoredData
 import com.heetox.app.Model.Product.AlternateResponseItem
-import com.heetox.app.Utils.Resource
-import com.heetox.app.ViewModel.Authentication.AuthenticationViewModel
-import com.heetox.app.ViewModel.ProductsVM.ProductsViewModel
+import com.heetox.app.Utils.Action
+import com.heetox.app.Utils.UiEvent
+import com.heetox.app.ViewModel.ProductsVM.ProductListViewModel
 import com.heetox.app.ui.theme.HeetoxBrightGreen
 import com.heetox.app.ui.theme.HeetoxDarkGray
 import com.heetox.app.ui.theme.HeetoxWhite
@@ -51,18 +53,16 @@ import com.heetox.app.ui.theme.HeetoxWhite
 @Composable
 fun ProductListScreen(
     category: String,
-    AuthVM: AuthenticationViewModel,
-    ProductVM: ProductsViewModel,
     navController: NavHostController,
-    source :String? = null
+    userData : LocalStoredData?
 ) {
 
+    val productListVM : ProductListViewModel = hiltViewModel()
     val context = LocalContext.current
 
-    val userData = AuthVM.Localdata.collectAsState()
-    val token = userData.value?.Token ?: ""
+    val token = userData?.Token ?: ""
 
-    val subCategories = ProductVM.SubCategoriesData.collectAsState()
+    val subCategories = productListVM.subCategoriesData.collectAsState()
     val subCategoriesList = subCategories.value.data?.subcategories
 
 
@@ -79,7 +79,7 @@ fun ProductListScreen(
     }
 
 
-    val allProduct = ProductVM.AlternativeProductData.collectAsState()
+    val allProduct = productListVM.alternativeProductData.collectAsState()
     var dataList : ArrayList<AlternateResponseItem>? = allProduct.value.data
 
     //data list states
@@ -92,40 +92,64 @@ fun ProductListScreen(
 
     val lazyListState = rememberLazyListState()
 
-    LaunchedEffect(subCategories.value) {
 
-        when(subCategories.value){
-            is Resource.Error -> {
-                subCategoryError = "Oops! Couldn't Load :("
-                subCategoryLoading = false
-            }
-            is Resource.Loading -> {
-                subCategoryLoading = true
-                subCategoryError = ""
-            }
-            is Resource.Nothing -> {}
-            is Resource.Success ->{
+    LaunchedEffect(Unit){
+        productListVM.getSubCategory(category)
+    }
 
-                subCategoryError = ""
-                subCategoryLoading = false
+    LaunchedEffect(Unit){
+        productListVM.uiEvent.collect{ event ->
+            when(event){
+                is UiEvent.Error ->{
 
-                if (currentSubCategory.isEmpty() && subCategoriesList?.isNotEmpty() == true) {
-                    currentSubCategory = subCategoriesList[0]
+                    if(event.action == Action.SubCategories){
+                        subCategoryError = "Oops! Couldn't Load :("
+                        subCategoryLoading = false
+                    }
+
+                    if(event.action == Action.AlternativeProducts){
+                        dataListLoading = false
+                        dataListError = "No Products Available"
+                    }
 
                 }
-//                Log.e("1 --->", "ProductListScreen: ${currentSubCategory} ${subCategoriesList} ", )
+                is UiEvent.Loading -> {
+                    if(event.action == Action.SubCategories){
+                        subCategoryLoading = true
+                        subCategoryError = ""
+                    }
 
+                    if(event.action == Action.AlternativeProducts){
+                        dataListLoading = true
+                        dataListError = ""
+                    }
+                }
+                is UiEvent.Success -> {
+                    if(event.action == Action.SubCategories){
+                        subCategoryError = ""
+                        subCategoryLoading = false
+                    }
 
+                    if(event.action == Action.AlternativeProducts){
+                        dataListError = ""
+                        dataList = allProduct.value.data
+                        dataListLoading = false
+                    }
+                }
+                UiEvent.Idle -> Unit
             }
-
         }
     }
 
-
+    LaunchedEffect(subCategoriesList){
+        if (currentSubCategory.isEmpty() && subCategoriesList?.isNotEmpty() == true) {
+            currentSubCategory = subCategoriesList[0]
+        }
+    }
 
     LaunchedEffect(currentSubCategory) {
         if (currentSubCategory.isNotEmpty() && subCategoriesList?.isNotEmpty() == true) {
-            ProductVM.getalternativeproducts(currentSubCategory, token)
+            productListVM.getAlternativeProducts(currentSubCategory, token)
 
             val index = subCategoriesList.indexOf(currentSubCategory.replace("_", " ")) // Find the index
             if (index != -1) {
@@ -135,34 +159,13 @@ fun ProductListScreen(
     }
 
 
-    LaunchedEffect(allProduct.value){
-        when(allProduct.value){
-            is Resource.Error ->{
-                dataListLoading = false
-                dataListError = "No Products Available"
-            }
-            is Resource.Loading ->{
-                dataListLoading = true
-                dataListError = ""
-//
-            }
-            is Resource.Nothing -> {}
-            is Resource.Success -> {
-                dataListError = ""
-                dataList = allProduct.value.data
-                dataListLoading = false
-//                Log.e("2 --->", "ProductListScreen: ${dataList} ", )
-            }
-        }
-    }
-
 
     // Swipe to refresh functionality
     val swipeRefreshState = rememberSwipeRefreshState(isRefreshing = false)
 
     SwipeRefresh(state = swipeRefreshState, onRefresh = {
-        ProductVM.getSubCategory(category) // Trigger refresh
-        ProductVM.getalternativeproducts(currentSubCategory,token)
+        productListVM.getSubCategory(category) // Trigger refresh
+        productListVM.getAlternativeProducts(currentSubCategory,token)
 
     }) {
 
@@ -256,7 +259,7 @@ fun ProductListScreen(
                                                     if (currentSubCategory != selectedCategory) {
                                                         currentSubCategory = selectedCategory
                                                     }
-                                                    ProductVM.setSubcategory(selectedCategory.replace(" ", "_"))
+//                                                    productListVM.setSubcategory(selectedCategory.replace(" ", "_"))
                                                 }
                                             )
                                         }
@@ -310,8 +313,7 @@ fun ProductListScreen(
 
                                     ProductCard(
                                         data = data,
-                                        ProductVM = ProductVM,
-                                        UserData = userData,
+                                        userData = userData,
                                         context = context,
                                         navController = navController,
                                         isLiked = isLiked,

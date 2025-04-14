@@ -29,8 +29,6 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -51,7 +49,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.heetox.app.Composables.AuthCompose.BaseHeading
 import com.heetox.app.Composables.AuthCompose.DatePickerModal
@@ -59,20 +56,23 @@ import com.heetox.app.Composables.AuthCompose.Input
 import com.heetox.app.Composables.AuthCompose.LoadingOverlay
 import com.heetox.app.Composables.AuthCompose.PasswordInput
 import com.heetox.app.Composables.AuthCompose.formatDate
-import com.heetox.app.Model.Authentication.AuthUser
-import com.heetox.app.Model.Authentication.LoginData
 import com.heetox.app.Model.Authentication.LoginSend
 import com.heetox.app.Model.Authentication.RegisterSend
-import com.heetox.app.Utils.Resource
+import com.heetox.app.Utils.Action
+import com.heetox.app.Utils.UiEvent
 import com.heetox.app.Utils.rememberImeState
-import com.heetox.app.ViewModel.Authentication.AuthenticationViewModel
 import com.heetox.app.ui.theme.HeetoxDarkGray
 import com.heetox.app.ui.theme.HeetoxDarkGreen
 import com.heetox.app.ui.theme.HeetoxGreen
 import com.heetox.app.ui.theme.HeetoxWhite
+import kotlinx.coroutines.flow.Flow
 
 @Composable
-fun RegisterScreen(navController: NavHostController){
+fun RegisterScreen(navController: NavHostController,
+                   loginUser: (LoginSend) -> Unit,
+                   registerUser: (RegisterSend) -> Unit,
+                   uiEvent: Flow<UiEvent>
+                   ){
 
 
 Column(modifier = Modifier
@@ -80,7 +80,16 @@ Column(modifier = Modifier
 
    ) {
 
-       RegisterInputs(navController)
+       RegisterInputs(
+           navController, login = {
+               loginUser(it)
+           },
+           register = {
+               registerUser(it)
+           },
+           uiEvent = uiEvent
+       )
+
     Spacer(modifier = Modifier
         .fillMaxSize()
         .background(HeetoxWhite)
@@ -95,17 +104,9 @@ Column(modifier = Modifier
 
 
 @Composable
-fun RegisterInputs(navController: NavHostController){
+fun RegisterInputs(navController: NavHostController, uiEvent: Flow<UiEvent>, login:(LoginSend)->Unit, register:(RegisterSend)->Unit){
 
-    val viewmodel : AuthenticationViewModel = hiltViewModel()
-
-    //register
-    val data : State<Resource<AuthUser>> = viewmodel.registerUserData.collectAsState()
-
-    //login
-    val datalogin : State<Resource<LoginData>> = viewmodel.Loginuserdata.collectAsState()
     val context = LocalContext.current
-
 
     var name by rememberSaveable { mutableStateOf("") }
     var dob by rememberSaveable { mutableStateOf("") }
@@ -113,13 +114,13 @@ fun RegisterInputs(navController: NavHostController){
     var email by rememberSaveable { mutableStateOf("") }
     var phone by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
-    var error by rememberSaveable { mutableStateOf("") }
+    var message by rememberSaveable { mutableStateOf("") }
     var loading by rememberSaveable { mutableStateOf(false) }
 
     var showDatePicker by rememberSaveable { mutableStateOf(false) }
 
-    val genderoptions = listOf("male","female","other")
-    var isgenderexpanded by rememberSaveable { mutableStateOf(false) }
+    val genderOptions = listOf("male","female","other")
+    var isGenderExpanded by rememberSaveable { mutableStateOf(false) }
 
 
     if(loading){
@@ -212,7 +213,7 @@ fun RegisterInputs(navController: NavHostController){
                       
                   }
 
-                    Text(text = error , modifier = Modifier .padding(15.dp) ,
+                    Text(text = message , modifier = Modifier .padding(15.dp) ,
                         style = TextStyle(
                             color = HeetoxDarkGreen,
                             fontSize = 15.sp
@@ -280,7 +281,7 @@ fun RegisterInputs(navController: NavHostController){
                            modifier = Modifier
                                .padding(horizontal = 16.dp, vertical = 2.dp)
                                .width(300.dp)
-                               .clickable { isgenderexpanded = true },
+                               .clickable { isGenderExpanded = true },
                            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Next),
                            readOnly = true,
                            visualTransformation = VisualTransformation.None,
@@ -304,17 +305,17 @@ Column(
 ){
 
     DropdownMenu(
-        expanded = isgenderexpanded,
-        onDismissRequest = { isgenderexpanded = false },
+        expanded = isGenderExpanded,
+        onDismissRequest = { isGenderExpanded = false },
         modifier = Modifier
             .width(300.dp)
     ) {
-        genderoptions.forEach { item ->
+        genderOptions.forEach { item ->
             DropdownMenuItem(
                 text = { Text(text = item) },
                 onClick = {
                     gender = item
-                    isgenderexpanded = false
+                    isGenderExpanded = false
                 }
             )
         }
@@ -341,22 +342,22 @@ Column(
                     Button(onClick = {
 
                         if(name == ""){
-                            error = "Name cannot be empty"
+                            message = "Name cannot be empty"
                         }else if(!dobregex.matches(dob)){
-                            error = "DOB not in Correct Format"
+                            message = "DOB not in Correct Format"
                         }else if(gender == ""){
-                            error = "Gender cannot be empty"
+                            message = "Gender cannot be empty"
                         }else if(phone.length != 10){
-                            error = "Phone no. is not Correct"
+                            message = "Phone no. is not Correct"
                         }else if(!emailregex.matches(email.trim())){
-                            error = "Email is not Correct"
+                            message = "Email is not Correct"
                         }else if(password.length < 8){
-                            error = "Password Length is minimum 8 characters"
+                            message = "Password Length is minimum 8 characters"
                         }
                         else{
-                            error = ""
+                            message = ""
 
-                            viewmodel.registerUser(
+                            register(
                                 RegisterSend(
                                     dob,
                                     email,
@@ -392,73 +393,55 @@ Column(
     }
 
 
- LaunchedEffect(key1 = data.value) {
-
-     when(data.value){
-
-         is Resource.Nothing -> {
-             error = ""
-         }
-
-         is Resource.Loading -> {
-             error = "Loading..."
-             loading = true
-         }
-
-         is Resource.Success -> {
-
-             loading = false
-             error="User registered Successfully"
-
-             viewmodel.loginUser(LoginSend(
-                 email,
-                 password
-             ))
-
-         }
-
-         is Resource.Error -> {
-             loading = false
-             error = data.value.error.toString()
-         }
-
-     }
-
- }
 
 
+    LaunchedEffect(Unit) {
+        uiEvent.collect { event ->
+            when (event) {
+                is UiEvent.Loading -> {
+                    loading = true
+                    message = when (event.action) {
+                        Action.Register -> "Registering..."
+                        Action.Login -> "Logging in..."
+                        else -> "Processing..."
+                    }
+                }
 
-    LaunchedEffect(key1 = datalogin.value) {
+                is UiEvent.Success -> {
+                    loading = false
+                    when (event.action) {
+                        Action.Register -> {
+                            message = "Registered successfully"
+                            // Automatically trigger login after successful registration
+                            login(LoginSend(email, password))
+                        }
 
-        when(datalogin.value){
+                        Action.Login -> {
+                            message = "Login done"
+                            Toast.makeText(context, "Logged in", Toast.LENGTH_SHORT).show()
+                            navController.navigate("home") {
+                                popUpTo("home") { inclusive = true }
+                            }
+                        }
 
-            is Resource.Nothing -> {}
+                        else -> {
+                            // Handle other actions if needed
+                        }
+                    }
+                }
 
-            is Resource.Loading -> {
-                error = "$error | Logging in"
-                loading = true
+                is UiEvent.Error -> {
+                    loading = false
+                    message = event.message
+                }
+
+                UiEvent.Idle -> {
+                    loading = false
+                    message = ""
+                }
             }
-
-            is Resource.Success -> {
-
-                loading = false
-                error="Login Done"
-                navController.navigate("home")
-                Toast.makeText(context,"Logined", Toast.LENGTH_SHORT).show()
-
-            }
-
-            is Resource.Error -> {
-                loading = false
-                error = data.value.error.toString()
-            }
-
-
         }
-
-
     }
-
 
 
 }

@@ -4,25 +4,22 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.net.Uri
 import android.provider.OpenableColumns
-import com.google.gson.Gson
 import com.heetox.app.ApiInterface.AuthenticationInterface
 import com.heetox.app.Model.ApiResponse
 import com.heetox.app.Model.Authentication.AuthUser
 import com.heetox.app.Model.Authentication.ChangePasswordSend
-import com.heetox.app.Model.Authentication.ErrorResponse
-import com.heetox.app.Model.Authentication.LocalStoredData
 import com.heetox.app.Model.Authentication.LoginData
 import com.heetox.app.Model.Authentication.LoginSend
 import com.heetox.app.Model.Authentication.RegisterSend
 import com.heetox.app.Model.Authentication.SendOtpSend
+import com.heetox.app.Model.Authentication.UpdateProfileFunctionSend
 import com.heetox.app.Model.Authentication.UpdateProfileSend
 import com.heetox.app.Model.Authentication.UpdateProfleResponse
+import com.heetox.app.Model.Authentication.UpdateUserProfileImageSend
 import com.heetox.app.Model.Authentication.VerifyEmailSend
 import com.heetox.app.Utils.Resource
+import com.heetox.app.Utils.extractErrorMessage
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -33,162 +30,28 @@ import javax.inject.Inject
 
 
 class AuthenticationRepository @Inject constructor(
-    val Api: AuthenticationInterface,
-    val TokenRepo: SharedPreferenceRepository
-
+    private val authApi: AuthenticationInterface,
 ) {
 
-    //register
-    private val RegisterUser = MutableStateFlow<Resource<AuthUser>>(Resource.Nothing())
 
-    val accessRegisterUser: StateFlow<Resource<AuthUser>>
-        get() = RegisterUser.asStateFlow()
-
-
-    //login
-    private var LoginUser = MutableStateFlow<Resource<LoginData>>(Resource.Nothing())
-
-    val accessLoginUser: StateFlow<Resource<LoginData>> = LoginUser.asStateFlow()
-//        get() = LoginUser
-
-
-    //logout
-    private val LogoutUser = MutableStateFlow<Resource<ApiResponse<Nothing>>>(Resource.Nothing())
-
-    val accessLogoutUser: StateFlow<Resource<ApiResponse<Nothing>>>
-        get() = LogoutUser
-
-
-    //current User
-    private var CurrentUser = MutableStateFlow<Resource<AuthUser>>(Resource.Nothing())
-
-    val accessCurrentUser: StateFlow<Resource<AuthUser>>
-        get() = CurrentUser
-
-
-    //LocalData
-    val Localdata: StateFlow<LocalStoredData?>
-        get() = TokenRepo.accessLocalData
-
-
-    //UpdateUser
-    private var UpdateUser = MutableStateFlow<Resource<UpdateProfleResponse>>(Resource.Nothing())
-
-    val accessUpdatetUser: StateFlow<Resource<UpdateProfleResponse>>
-        get() = UpdateUser
-
-
-    //one time fetch
-    private var FetchUser = MutableStateFlow<Boolean>(false)
-
-    val accessFetchUser: StateFlow<Boolean>
-        get() = FetchUser
-
-
-    //upload Image
-    private var UplaodProfileImage = MutableStateFlow<Resource<AuthUser>>(Resource.Nothing())
-
-    val accessUplaodprofileImage: StateFlow<Resource<AuthUser>>
-        get() = UplaodProfileImage
-
-
-    //remove Image
-    private var RemoveProfileImage = MutableStateFlow<Resource<AuthUser>>(Resource.Nothing())
-
-    val accessRemoveprofileImage: StateFlow<Resource<AuthUser>>
-        get() = RemoveProfileImage
-
-
-    //send otp
-    private var SendOtpData = MutableStateFlow<Resource<String>>(Resource.Nothing())
-
-    val accessSendOtpData: StateFlow<Resource<String>>
-        get() = SendOtpData
-
-
-    //verify otp
-    private var VerifyOtpData = MutableStateFlow<Resource<AuthUser>>(Resource.Nothing())
-
-    val accessVerifyOtpData: StateFlow<Resource<AuthUser>>
-        get() = VerifyOtpData
-
-
-    //Change password
-    private var ChangePasswordData = MutableStateFlow<Resource<String>>(Resource.Nothing())
-
-    val accessChangePasswordData: StateFlow<Resource<String>>
-        get() = ChangePasswordData
-
-
-    //Forgot Password
-    private var ForgotPasswordData = MutableStateFlow<Resource<String>>(Resource.Nothing())
-
-    val accessForgotPasswordData: StateFlow<Resource<String>>
-        get() = ForgotPasswordData
-
-
-    suspend fun Registeruser(userData: RegisterSend){
-
-        RegisterUser.emit(Resource.Loading())
-
-        RegisterUser.value = Resource.Loading()
+    suspend fun registerUser(userData: RegisterSend): Resource<AuthUser> {
 
         try {
-            val response = Api.registerUser(userData)
+            val response = authApi.registerUser(userData)
 
-            if (response.body() != null && response.body()!!.success) {
+            return if (response.body() != null && response.body()!!.success) {
 
-                RegisterUser.emit(Resource.Success<AuthUser>(response.body()?.data))
-
+                Resource.Success(response.body()?.data)
 
             } else {
 
-                val errorBody = response.errorBody()?.string()
-                val errorResponse = errorBody?.let {
-                    Gson().fromJson(it, ErrorResponse::class.java)
-                }
-
-                RegisterUser.emit(Resource.Error(errorResponse!!.message))
+                Resource.Error(extractErrorMessage(response))
 
             }
-        }catch (e: Exception) {
+        } catch (e: Exception) {
 
 
-            if(e is CancellationException){
-                throw e
-            }
-
-            RegisterUser.emit(Resource.Error("Couldn't Register Try again"))
-//            Log.d("auth repo ->", "Registeruser: $e")
-        }
-
-    }
-
-
-
-    suspend fun registerUser(userData: RegisterSend):Resource<AuthUser>{
-
-        try {
-            val response = Api.registerUser(userData)
-
-            if (response.body() != null && response.body()!!.success) {
-
-               return Resource.Success<AuthUser>(response.body()?.data)
-
-            } else {
-
-                val errorBody = response.errorBody()?.string()
-                val errorResponse = errorBody?.let {
-                    Gson().fromJson(it, ErrorResponse::class.java)
-                }
-
-                return Resource.Error(errorResponse!!.message)
-
-            }
-        }catch (e: Exception) {
-
-
-            if(e is CancellationException){
+            if (e is CancellationException) {
                 throw e
             }
 
@@ -198,71 +61,76 @@ class AuthenticationRepository @Inject constructor(
     }
 
 
-
-    suspend fun Loginuser(userData: LoginSend) {
-
-        LoginUser.emit(Resource.Loading())
+    suspend fun loginUser(userData: LoginSend): Resource<LoginData> {
 
         try {
-            val response = Api.loginUser(userData)
+            val response = authApi.loginUser(userData)
 
             if (response.body() != null && response.body()!!.success) {
 
-                LoginUser.emit(Resource.Success(response.body()!!.data))
+                response.body()?.data?.let { getCurrentUser(it.accesstoken) }
 
-                LoginUser.value.data?.let {
-                    GetCurrentUser(it.accesstoken)
-                }
+                return Resource.Success(response.body()?.data)
 
             } else {
 
-                val errorBody = response.errorBody()?.string()
-                val errorResponse = errorBody?.let {
-                    Gson().fromJson(it, ErrorResponse::class.java)
-                }
-
-                LoginUser.emit(Resource.Error(errorResponse!!.message))
+                return Resource.Error(extractErrorMessage(response))
 
             }
         } catch (e: Exception) {
 
-            LoginUser.emit(Resource.Error("Couldn't Login Try again"))
+            return Resource.Error("Couldn't Register Try again")
 //            Log.d("auth repo ->", "Loginuser: $e")
 
         }
 
+    }
+
+
+    suspend fun getCurrentUser(token: String): Resource<AuthUser> {
+
+        try {
+
+            val response = authApi.getCurrentUser(token)
+
+            return if (response.body() != null && response.body()!!.success) {
+
+                Resource.Success(response.body()?.data)
+
+            } else {
+
+                Resource.Error(extractErrorMessage(response))
+
+            }
+        } catch (e: Exception) {
+
+            return Resource.Error("Couldn't get Current User Try again")
+
+//            Log.d("auth repo ->", "GetCurentUser: $e")
+        }
 
     }
 
 
-    suspend fun logoutUser(Token: String) {
-
-        LogoutUser.emit(Resource.Loading())
+    suspend fun logoutUser(token: String): Resource<ApiResponse<Nothing>> {
 
         try {
 
-            val response = Api.logoutuser(Token)
+            val response = authApi.logoutuser(token)
 
-            if (response.body()!!.success && response.body() != null) {
+            return if (response.body()!!.success && response.body() != null) {
 
-                LogoutUser.emit(Resource.Success(response.body()))
-
-                TokenRepo.removeToken()
+                Resource.Success(response.body())
 
             } else {
 
-                val errorBody = response.errorBody()?.string()
-                val errorResponse = errorBody?.let {
-                    Gson().fromJson(it, ErrorResponse::class.java)
-                }
-
-                LogoutUser.emit(Resource.Error(errorResponse!!.message))
+                Resource.Error(extractErrorMessage(response))
 
             }
 
         } catch (e: Exception) {
 
-            LogoutUser.emit(Resource.Error("Couldn't Logout Try again"))
+            return Resource.Error("Couldn't Logout Try again")
 //            Log.d("auht repo ->", "logoutUser: $e")
 
         }
@@ -271,115 +139,27 @@ class AuthenticationRepository @Inject constructor(
     }
 
 
-    suspend fun GetCurrentUser(Token: String) {
-
-        CurrentUser.emit(Resource.Loading())
-
-        try {
-            val response = Api.getCurrentUser(Token)
-
-            if (response.body() != null && response.body()!!.success) {
-
-                CurrentUser.emit(Resource.Success(response.body()?.data))
-
-
-                if (Localdata.value == null) {
-
-                    TokenRepo.saveToken(
-                        LocalStoredData(
-                            true,
-                            accessLoginUser.value.data!!.accesstoken,
-                            accessLoginUser.value.data!!.user.fullname,
-                            accessLoginUser.value.data!!.user.email,
-                            accessLoginUser.value.data!!.user.is_email_verified,
-                            accessLoginUser.value.data!!.user.age,
-                            accessLoginUser.value.data!!.user.phone_number,
-                            accessLoginUser.value.data!!.user.DOB,
-                            accessLoginUser.value.data!!.user.avatar,
-                            accessLoginUser.value.data!!.user.gender
-                        )
-                    )
-
-                } else {
-
-                    TokenRepo.saveToken(
-                        LocalStoredData(
-                            true,
-                            Localdata.value!!.Token,
-                            accessCurrentUser.value.data!!.fullname,
-                            accessCurrentUser.value.data!!.email,
-                            accessCurrentUser.value.data!!.is_email_verified,
-                            accessCurrentUser.value.data!!.age,
-                            accessCurrentUser.value.data!!.phone_number,
-                            accessCurrentUser.value.data!!.DOB,
-                            accessCurrentUser.value.data!!.avatar,
-                            accessCurrentUser.value.data!!.gender
-                        )
-                    )
-
-                    FetchUser.emit(true)
-
-                }
-
-            } else {
-
-                val errorBody = response.errorBody()?.string()
-                val errorResponse = errorBody?.let {
-                    Gson().fromJson(it, ErrorResponse::class.java)
-                }
-
-                CurrentUser.emit(Resource.Error(errorResponse!!.message))
-
-            }
-        } catch (e: Exception) {
-            RegisterUser.emit(Resource.Error("Couldn't get Current User Try again"))
-//            Log.d("auth repo ->", "GetCurentUser: $e")
-        }
-
-    }
-
-
-    suspend fun UpdateProfile(Token: String, UserData: UpdateProfileSend) {
-
-
-        UpdateUser.emit(Resource.Loading())
+    suspend fun updateProfile(
+        token: String,
+        userData: UpdateProfileSend
+    ): Resource<UpdateProfleResponse> {
 
         try {
 
-            val response = Api.updateProfile(Token, UserData)
+            val response = authApi.updateProfile(token, userData)
 
-            if (response.body() != null && response.body()!!.success) {
+            return if (response.body() != null && response.body()!!.success) {
 
-                UpdateUser.emit(Resource.Success(response.body()?.data))
-
-                TokenRepo.saveToken(
-                    LocalStoredData(
-                        true,
-                        Localdata.value!!.Token,
-                        accessUpdatetUser.value.data!!.fullname,
-                        accessUpdatetUser.value.data!!.email,
-                        accessUpdatetUser.value.data!!.is_email_verified,
-                        accessUpdatetUser.value.data!!.age,
-                        accessUpdatetUser.value.data!!.phone_number,
-                        accessUpdatetUser.value.data!!.DOB,
-                        accessUpdatetUser.value.data!!.avatar,
-                        accessUpdatetUser.value.data!!.gender
-
-                    )
-                )
+                Resource.Success(response.body()?.data)
 
             } else {
 
-                val errorBody = response.errorBody()?.string()
-                val errorResponse = errorBody?.let {
-                    Gson().fromJson(it, ErrorResponse::class.java)
-                }
-                UpdateUser.emit(Resource.Error(errorResponse!!.message))
+                Resource.Error(extractErrorMessage(response))
 
             }
         } catch (e: Exception) {
 
-            UpdateUser.emit(Resource.Error("Couldn't get Current User Try again"))
+            return Resource.Error("Couldn't get Current User Try again")
 //            Log.d("catch ->", "GetUpdate: $e")
 
         }
@@ -424,56 +204,33 @@ class AuthenticationRepository @Inject constructor(
 
     // to upload image
     @SuppressLint("Recycle")
-    suspend fun UplaodProfileImage(context: Context, imageUri: Uri, token: String) {
-
-        UplaodProfileImage.emit(Resource.Loading())
+    suspend fun uploadProfileImage(
+        data : UpdateUserProfileImageSend
+    ): Resource<AuthUser> {
 
         try {
 
-            val mimeType = getMimeType(context, imageUri)
-            val inputStream = context.contentResolver.openInputStream(imageUri)
+            val mimeType = getMimeType(data.context,data.uri)
+            val inputStream = data.context.contentResolver.openInputStream(data.uri)
             val tempFile =
-                createTempFileFromInputStream(context, inputStream, getFileName(context, imageUri))
+                createTempFileFromInputStream(data.context, inputStream, getFileName(data.context,data.uri))
             val requestFile = tempFile.asRequestBody(mimeType?.toMediaTypeOrNull())
 
             val body = MultipartBody.Part.createFormData("avatar", tempFile.name, requestFile)
-            val response = Api.uploadProfileImage(token, body)
+            val response = authApi.uploadProfileImage(data.token, body)
 
             if (response.body() != null && response.body()!!.success) {
 
-                UplaodProfileImage.emit(Resource.Success(response.body()!!.data))
-
-                TokenRepo.saveToken(
-                    LocalStoredData(
-                        true,
-                        Localdata.value!!.Token,
-                        UplaodProfileImage.value.data!!.fullname,
-                        UplaodProfileImage.value.data!!.email,
-                        UplaodProfileImage.value.data!!.is_email_verified,
-                        UplaodProfileImage.value.data!!.age,
-                        UplaodProfileImage.value.data!!.phone_number,
-                        UplaodProfileImage.value.data!!.DOB,
-                        UplaodProfileImage.value.data!!.avatar,
-                        UplaodProfileImage.value.data!!.gender
-                    )
-                )
+                return Resource.Success(response.body()!!.data)
 
 
             } else {
-
-                val errorBody = response.errorBody()?.string()
-                val errorResponse = errorBody?.let {
-                    Gson().fromJson(it, ErrorResponse::class.java)
-                }
-
-                UplaodProfileImage.emit(Resource.Error(errorResponse!!.message))
-
+                return Resource.Error(extractErrorMessage(response))
             }
-
 
         } catch (e: Exception) {
 
-            UplaodProfileImage.emit(Resource.Error("couldn't Upload Image Try Again"))
+            return Resource.Error("couldn't Upload Image Try Again")
 //            Log.d("Auth repo", "UploadProfileImage: $e")
 
         }
@@ -481,159 +238,99 @@ class AuthenticationRepository @Inject constructor(
     }
 
 
-    suspend fun RemoveProfileImage(token: String) {
-
-        RemoveProfileImage.emit(Resource.Loading())
+    suspend fun removeProfileImage(token: String): Resource<AuthUser> {
 
         try {
+            val response = authApi.removeProfileImage(token)
 
-            val response = Api.removeProfileImage(token)
+            return if (response.body() != null && response.body()!!.success) {
 
-            if (response.body() != null && response.body()!!.success) {
-
-                RemoveProfileImage.emit(Resource.Success(response.body()!!.data))
-
-                TokenRepo.saveToken(
-                    LocalStoredData(
-                        true,
-                        Localdata.value?.Token,
-                        RemoveProfileImage.value.data!!.fullname,
-                        RemoveProfileImage.value.data!!.email,
-                        RemoveProfileImage.value.data!!.is_email_verified,
-                        RemoveProfileImage.value.data!!.age,
-                        RemoveProfileImage.value.data!!.phone_number,
-                        RemoveProfileImage.value.data!!.DOB,
-                        RemoveProfileImage.value.data!!.avatar,
-                        RemoveProfileImage.value.data!!.gender
-                    )
-                )
-
+                Resource.Success(response.body()?.data)
 
             } else {
 
-                val errorBody = response.errorBody()?.string()
-                val errorResponse = errorBody?.let {
-                    Gson().fromJson(it, ErrorResponse::class.java)
-                }
-                RemoveProfileImage.emit(Resource.Error(errorResponse!!.message))
+                Resource.Error(extractErrorMessage(response))
 
             }
-
         } catch (e: Exception) {
 
-            RemoveProfileImage.emit(Resource.Error("Couldn't Remove Image Try Again"))
+            return Resource.Error("Couldn't Remove Image Try Again")
 //            Log.d("Auth repo", "RemoveProfileImage: $e")
 
         }
-
-
     }
 
 
-    suspend fun SendOtp(email: SendOtpSend) {
-
-        SendOtpData.emit(Resource.Loading())
+    suspend fun sendOtp(email: SendOtpSend): Resource<String> {
 
         try {
+            val response = authApi.sendOtp(email)
 
-            val response = Api.sendOtp(email)
 
+            return if (response.body() != null && response.body()!!.success) {
 
-            if (response.body() != null && response.body()!!.success) {
-
-                SendOtpData.emit(Resource.Success(response.body()!!.data))
+                Resource.Success(response.body()!!.data)
 
             } else {
 
-                val errorBody = response.errorBody()?.string()
-                val errorResponse = errorBody?.let {
-                    Gson().fromJson(it, ErrorResponse::class.java)
-                }
-
-                SendOtpData.emit(Resource.Error(errorResponse!!.message))
-
-//
+                Resource.Error(extractErrorMessage(response))
 
             }
 
         } catch (e: Exception) {
 
-            SendOtpData.emit(Resource.Error("Couldn't Send Otp Try Again"))
+            return Resource.Error("Couldn't Send Otp Try Again")
 //            Log.d("auth repo ", "SendOtp: $e")
-
         }
-
 
     }
 
 
-    suspend fun VerifyOtp(token: String, data: VerifyEmailSend) {
-
-        VerifyOtpData.emit(Resource.Loading())
+    suspend fun verifyOtp(token: String, data: VerifyEmailSend): Resource<AuthUser> {
 
         try {
+            val response = authApi.verifyOtp(token, data)
 
-            val response = Api.verifyOtp(token, data)
+            return if (response.body() != null && response.body()!!.success) {
 
-//            Log.d("auth -> repo", "VerifyOtp: ${response.body()}")
-
-            if (response.body() != null && response.body()!!.success) {
-
-                VerifyOtpData.emit(Resource.Success(response.body()!!.data))
-
+                Resource.Success(response.body()!!.data)
 
             } else {
 
-
-                val errorBody = response.errorBody()?.string()
-                val errorResponse = errorBody?.let {
-                    Gson().fromJson(it, ErrorResponse::class.java)
-                }
-
-
-                VerifyOtpData.emit(Resource.Error(errorResponse!!.message))
+                Resource.Error(extractErrorMessage(response))
 
             }
-
 
         } catch (e: Exception) {
 
 //            Log.d("auth repo", "VerifyOtp: $e")
-            VerifyOtpData.emit(Resource.Error("Couldn't Verify Otp Try Again"))
+            return Resource.Error("Couldn't Verify Otp Try Again")
 
         }
-
 
     }
 
 
-    suspend fun changePassword(token: String, data: ChangePasswordSend) {
-
-        ChangePasswordData.emit(Resource.Loading())
+    suspend fun changePassword(token: String, data: ChangePasswordSend): Resource<String> {
 
         try {
 
-            val response = Api.changePassword(token, data)
+            val response = authApi.changePassword(token, data)
 
-            if (response.body() != null && response.body()!!.success) {
+            return if (response.body() != null && response.body()!!.success) {
 
-                ChangePasswordData.emit(Resource.Success(response.body()!!.data))
+                Resource.Success(response.body()!!.data)
 
             } else {
 
-                val errorBody = response.errorBody()?.string()
-                val errorResponse = errorBody?.let {
-                    Gson().fromJson(it, ErrorResponse::class.java)
-                }
-
-                ChangePasswordData.emit(Resource.Error(errorResponse!!.message))
+                Resource.Error(extractErrorMessage(response))
 
             }
 
 
         } catch (e: Exception) {
 
-            ChangePasswordData.emit(Resource.Error("Couldn't Change password try again"))
+            return Resource.Error("Couldn't Change password try again")
 //            Log.d("auth repo", "changePassword: $e")
 
         }
@@ -642,42 +339,26 @@ class AuthenticationRepository @Inject constructor(
     }
 
 
-    suspend fun forgetPassword(email: String) {
-
-        ForgotPasswordData.emit(Resource.Loading())
+    suspend fun forgetPassword(email: String): Resource<String> {
 
         try {
+            val response = authApi.forgotPassword(SendOtpSend(email))
 
-            val response = Api.forgotPassword(
-                SendOtpSend(
-                    email
-                )
-            )
+            return if (response.body() != null && response.body()!!.success) {
 
-            if (response.body() != null && response.body()!!.success) {
-
-                ForgotPasswordData.emit(Resource.Success(response.body()!!.data))
+                Resource.Success(response.body()!!.data)
 
             } else {
 
-
-                val errorBody = response.errorBody()?.string()
-                val errorResponse = errorBody?.let {
-                    Gson().fromJson(it, ErrorResponse::class.java)
-                }
-
-                ForgotPasswordData.emit(Resource.Error(errorResponse!!.message))
-
-
+                Resource.Error(extractErrorMessage(response))
             }
 
         } catch (e: Exception) {
 
-            ForgotPasswordData.emit(Resource.Error("Couldn't send Try Again"))
+            return Resource.Error("Couldn't send Try Again")
 //            Log.d("Auth repo", "forgetPassword: $e")
 
         }
-
 
     }
 

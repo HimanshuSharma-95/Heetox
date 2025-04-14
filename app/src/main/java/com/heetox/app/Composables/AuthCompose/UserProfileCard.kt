@@ -25,7 +25,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -39,53 +38,52 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import coil.transform.CircleCropTransformation
 import com.heetox.app.Composables.ProductCompose.LazyLikedProduct
+import com.heetox.app.Model.Authentication.LocalStoredData
+import com.heetox.app.Model.Product.LikedProductRepsonse
 import com.heetox.app.R
-import com.heetox.app.ViewModel.Authentication.AuthenticationViewModel
-import com.heetox.app.ViewModel.ProductsVM.ProductsViewModel
+import com.heetox.app.Utils.Resource
+import com.heetox.app.Utils.UiEvent
 import com.heetox.app.ui.theme.HeetoxDarkGray
 import com.heetox.app.ui.theme.HeetoxDarkGreen
 import com.heetox.app.ui.theme.HeetoxLightGray
 import com.heetox.app.ui.theme.HeetoxWhite
+import kotlinx.coroutines.flow.Flow
 
 
 @Composable
 fun UserProfileCard(
-    navController : NavHostController
+    navController : NavHostController,
+    userData:LocalStoredData,
+    getLikedProducts:(String)->Unit,
+    uiEvent: Flow<UiEvent>,
+    likedProductsData : Resource<LikedProductRepsonse>
 ){
 
 
-
-    val viewmodel : AuthenticationViewModel = hiltViewModel()
-    val UserData = viewmodel.Localdata.collectAsState()
-    val UploadProfileimage = viewmodel.UploadProfileImageData.collectAsState()
     val context = LocalContext.current
-    val ProductVM : ProductsViewModel = hiltViewModel()
 
-
-
-    var email by rememberSaveable {
-        mutableStateOf(UserData.value!!.Email )
+    val email by rememberSaveable {
+        mutableStateOf(userData.Email )
     }
-    var age by rememberSaveable {
-        mutableStateOf(UserData.value!!.Age)
+    val age by rememberSaveable {
+        mutableStateOf(userData.Age)
     }
 
-    var gender by rememberSaveable {
-        mutableStateOf(UserData.value!!.gender)
+    val gender by rememberSaveable {
+        mutableStateOf(userData.gender)
     }
 
-    var phone by rememberSaveable {
-        mutableStateOf(UserData.value!!.Phone)
+    val phone by rememberSaveable {
+        mutableStateOf(userData.Phone)
     }
 
-    var ImageUrl by rememberSaveable {
-        mutableStateOf(UserData.value!!.avatar)
+    var imageUrl by rememberSaveable {
+        mutableStateOf(userData.avatar)
     }
 
 
@@ -106,12 +104,12 @@ fun UserProfileCard(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
 
-            LaunchedEffect(ImageUrl) {
-                ImageUrl = UserData.value?.avatar ?: ""
+            LaunchedEffect(imageUrl) {
+                imageUrl = userData.avatar ?: ""
             }
 
 
-            if (ImageUrl == "") {
+            if (imageUrl == "") {
 
                 Image(
                     painter = painterResource(id = R.drawable.profile),
@@ -122,7 +120,7 @@ fun UserProfileCard(
             } else {
 
 
-                val imageRequest = ImageUrl.let {
+                val imageRequest = imageUrl.let {
 
                     ImageRequest.Builder(context)
                         .data(it)
@@ -159,7 +157,7 @@ fun UserProfileCard(
 
 
             Text(
-                text = UserData.value!!.Name,
+                text = userData.Name,
                 modifier = Modifier,
                 fontSize = 30.sp,
                 style = MaterialTheme.typography.displayLarge,
@@ -249,7 +247,7 @@ Box(
            color = HeetoxDarkGray
        )
 
-       if(UserData.value?.EmailStatus == false){
+       if(!userData.EmailStatus){
 
         Column(
             modifier = Modifier .fillMaxWidth() ,
@@ -438,7 +436,14 @@ Box(
 
 
 
-        UserData.value!!.Token?.let { LazyLikedProduct(authorization = it, ProductVM = ProductVM, navController = navController) }
+        userData.Token?.let { LazyLikedProduct(
+            authorization = it, navController = navController,
+            getLikedProducts = { token ->
+                getLikedProducts(token)
+            },
+            uiEvent = uiEvent,
+            likedProductsData = likedProductsData,
+        ) }
 
 
 

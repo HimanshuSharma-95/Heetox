@@ -28,7 +28,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,22 +45,27 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
+import com.heetox.app.Model.Product.ConsumeProductResponse
 import com.heetox.app.Model.Product.ProductbyBarcodeResponse
 import com.heetox.app.R
+import com.heetox.app.Utils.Action
 import com.heetox.app.Utils.Resource
-import com.heetox.app.ViewModel.ProductsVM.ProductsViewModel
+import com.heetox.app.Utils.UiEvent
 import com.heetox.app.ui.theme.HeetoxDarkGray
 import com.heetox.app.ui.theme.HeetoxDarkGreen
 import com.heetox.app.ui.theme.HeetoxWhite
+import kotlinx.coroutines.flow.Flow
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ConsumeProductCard(
-    Details: ProductbyBarcodeResponse,
-    ProductVM: ProductsViewModel,
+    details: ProductbyBarcodeResponse,
+    consumeProduct:(String,String,Float)->Unit,
     token: String?,
-    navcontroller : NavHostController
+    navController : NavHostController,
+    consumeProductData : Resource<ConsumeProductResponse>,
+    uiEvent: Flow<UiEvent>
 ) {
 
 
@@ -69,17 +73,15 @@ fun ConsumeProductCard(
         mutableStateOf("")
     }
 
-    var Loading by rememberSaveable {
+    var loading by rememberSaveable {
         mutableStateOf(false)
     }
-
-    var ConsumeProductData = ProductVM.ConsumeProductData.collectAsState()
 
 
     var step by rememberSaveable { mutableStateOf(1) }
 
-    val totalSize = Details.product_data.nutritional_value.total_weight
-    val servingSize = Details.product_data.nutritional_value.serving_size
+    val totalSize = details.product_data.nutritional_value.total_weight
+    val servingSize = details.product_data.nutritional_value.serving_size
 
     val totalServings = totalSize / servingSize
 
@@ -100,35 +102,38 @@ fun ConsumeProductCard(
     var selectedNumber by rememberSaveable { mutableStateOf(0.0) }
 
 
-    LaunchedEffect(key1 = ConsumeProductData.value) {
+    LaunchedEffect(Unit) {
+        uiEvent.collect { event ->
+            when (event) {
+                is UiEvent.Loading -> {
+                    if (event.action == Action.ConsumeProduct) {
+                        loading = true
+                        error = "Just a second ;)"
+                    }
+                }
 
-        when(ConsumeProductData.value){
+                is UiEvent.Error -> {
+                    if (event.action == Action.ConsumeProduct) {
+                        loading = false
+                        error = "Oops! Couldn't Add Product"
+                        Toast.makeText(context, "Try Again", Toast.LENGTH_SHORT).show()
+                    }
+                }
 
-            is Resource.Error -> {
-                error = "oops! Couldn't Add Product"
-                Loading = false
+                is UiEvent.Success -> {
+                    if (event.action == Action.ConsumeProduct) {
+                        step = 2
+                        loading = false
+                        error = ""
+                    }
+                }
 
-                Toast.makeText(context,"Try Again",Toast.LENGTH_SHORT).show()
-
+                UiEvent.Idle -> Unit
             }
-
-            is Resource.Loading -> {
-                error = " Just a second ;) "
-                Loading = true
-            }
-
-            is Resource.Nothing -> {
-
-            }
-
-            is Resource.Success -> {
-                step = 2
-                Loading = false
-                error = ""
-            }
-
         }
     }
+
+
 
 
     LaunchedEffect(key1 = Unit) {
@@ -139,7 +144,7 @@ fun ConsumeProductCard(
     }
 
 
-    if(!Loading){
+    if(!loading){
 
         if(step == 2){
 
@@ -169,7 +174,7 @@ fun ConsumeProductCard(
 
                 Button(onClick = {
 
-                                 navcontroller.navigate("consumed")
+                                 navController.navigate("consumed")
 
                 },
 
@@ -440,7 +445,7 @@ fun ConsumeProductCard(
                         }else{
 
                             if (token != null) {
-                                ProductVM.consumeproduct(token = token, barcode = Details.product_data.product_barcode, size = consumedServing)
+                                consumeProduct(token,details.product_data.product_barcode,consumedServing)
                             }
 
                         }

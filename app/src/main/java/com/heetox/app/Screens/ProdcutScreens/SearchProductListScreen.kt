@@ -1,6 +1,5 @@
 package com.heetox.app.Screens.ProdcutScreens
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -32,37 +31,31 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.heetox.app.Composables.GeneralCompose.LogoAndSearchBar
 import com.heetox.app.Composables.ProductCompose.ProductCard
+import com.heetox.app.Model.Authentication.LocalStoredData
 import com.heetox.app.R
-import com.heetox.app.Utils.Resource
-import com.heetox.app.ViewModel.Authentication.AuthenticationViewModel
-import com.heetox.app.ViewModel.ProductsVM.ProductsViewModel
+import com.heetox.app.Utils.Action
+import com.heetox.app.Utils.UiEvent
+import com.heetox.app.ViewModel.ProductsVM.ProductListViewModel
 import com.heetox.app.ui.theme.HeetoxDarkGray
 import com.heetox.app.ui.theme.HeetoxWhite
 import kotlinx.coroutines.delay
 
 
-
 //list after searching
-
 @Composable
-fun SearchProductListScreen(search: String ,ProductVM: ProductsViewModel,AuthVM : AuthenticationViewModel,navController: NavHostController){
+fun SearchProductListScreen(search: String, navController: NavHostController,userData: LocalStoredData? ){
 
 
-    BackHandler {
-        navController.navigate("searchscreen")
-    }
-
+    val productListVM : ProductListViewModel = hiltViewModel()
 
     val context = LocalContext.current
-    val AllProducts = ProductVM.SearchData.collectAsState()
+    val allProducts = productListVM.searchData.collectAsState()
 
-    val dataList  = AllProducts.value.data
-    val UserData = AuthVM.Localdata.collectAsState()
-
-
+    val dataList  = allProducts.value.data
 
     var loading by rememberSaveable {
         mutableStateOf(false)
@@ -79,7 +72,7 @@ fun SearchProductListScreen(search: String ,ProductVM: ProductsViewModel,AuthVM 
 
 
     val currentSearch = rememberUpdatedState(search)
-    val currentToken = rememberUpdatedState(UserData.value?.Token)
+    val currentToken = rememberUpdatedState(userData?.Token)
 
 
 
@@ -90,9 +83,8 @@ fun SearchProductListScreen(search: String ,ProductVM: ProductsViewModel,AuthVM 
         val token = currentToken.value ?: ""
 
 
-
         if(!isApiCalled) {
-            ProductVM.searchproducts(
+            productListVM.searchProducts(
                 currentSearch.value,
                 token
             )
@@ -101,11 +93,7 @@ fun SearchProductListScreen(search: String ,ProductVM: ProductsViewModel,AuthVM 
 
         }
 
-
-
     }
-
-
 
 
 
@@ -191,27 +179,27 @@ fun SearchProductListScreen(search: String ,ProductVM: ProductsViewModel,AuthVM 
                         }
 
 
-                        items(dataList, key = {data -> data.product_barcode}){
+                         items(dataList, key = {data -> data.product_barcode}){
 
-                                data ->
+                                 data ->
 
-                            var isLiked by remember { mutableStateOf(data.isliked) }
-                            var likeCount by remember { mutableStateOf(data.likesCount) }
+                             var isLiked by remember { mutableStateOf(data.isliked) }
+                             var likeCount by remember { mutableStateOf(data.likesCount) }
 
 
-                            ProductCard(
-                                data = data,
-                                ProductVM = ProductVM,
-                                UserData = UserData,
-                                context = context,
-                                navController,
-                                isLiked = isLiked,
-                                likeCount = likeCount ,
-                                onLikeCountChange = { likeCount = it },
-                                onLikeChange = { isLiked = it }
-                            )
+                             ProductCard(
+                                 data = data,
+//                                ProductVM = ProductVM,
+                                 userData = userData,
+                                 context = context,
+                                 navController,
+                                 isLiked = isLiked,
+                                 likeCount = likeCount ,
+                                 onLikeCountChange = { likeCount = it },
+                                 onLikeChange = { isLiked = it }
+                             )
 
-                        }
+                     }
 
 
                     }
@@ -259,47 +247,37 @@ fun SearchProductListScreen(search: String ,ProductVM: ProductsViewModel,AuthVM 
 
 
 
-
-
-
-
     }
 
 
 
 
+    LaunchedEffect(Unit) {
+        productListVM.uiEvent.collect { event ->
+            when (event) {
+                is UiEvent.Loading -> {
+                    if (event.action == Action.SearchProduct) {
+                        loading = true
+                        error = "Just a second ;)"
+                    }
+                }
 
-    LaunchedEffect(key1 = AllProducts.value) {
+                is UiEvent.Success -> {
+                    if (event.action == Action.SearchProduct) {
+                        loading = false
+                        error = ""
+                    }
+                }
 
-        when(AllProducts.value){
-
-            is Resource.Error -> {
-                error = "oops! Couldn't Load :("
-                loading = false
-            }
-
-            is Resource.Loading -> {
-                error = " Just a second ;) "
-                loading = true
-            }
-
-            is Resource.Nothing -> {
-            }
-
-            is Resource.Success -> {
-                loading = false
-                error = ""
+                is UiEvent.Error -> {
+                    if (event.action == Action.SearchProduct) {
+                        loading = false
+                        error = event.message
+                    }
+                }
+                UiEvent.Idle -> Unit
             }
         }
-
-
-
-
     }
 
-
-
-
-
-
-    }
+}

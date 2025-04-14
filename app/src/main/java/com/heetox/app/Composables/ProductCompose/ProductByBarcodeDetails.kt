@@ -1,6 +1,5 @@
 package com.heetox.app.Composables.ProductCompose
 
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
@@ -44,9 +43,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -67,34 +65,39 @@ import androidx.compose.ui.zIndex
 import androidx.navigation.NavHostController
 import coil.compose.AsyncImage
 import com.heetox.app.Model.Authentication.LocalStoredData
+import com.heetox.app.Model.Product.ConsumeProductResponse
 import com.heetox.app.Model.Product.Ingredient
 import com.heetox.app.Model.Product.NutritionalValue
 import com.heetox.app.Model.Product.ProductbyBarcodeResponse
 import com.heetox.app.R
 import com.heetox.app.Utils.Resource
-import com.heetox.app.ViewModel.Authentication.AuthenticationViewModel
-import com.heetox.app.ViewModel.ProductsVM.ProductsViewModel
+import com.heetox.app.Utils.UiEvent
 import com.heetox.app.ui.theme.HeetoxDarkGray
 import com.heetox.app.ui.theme.HeetoxDarkGreen
 import com.heetox.app.ui.theme.HeetoxLightGray
 import com.heetox.app.ui.theme.HeetoxWhite
+import kotlinx.coroutines.flow.Flow
 import java.text.DecimalFormat
 
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun ProductByBarcodeDetails(Details : ProductbyBarcodeResponse , AuthVM : AuthenticationViewModel , ProductVM : ProductsViewModel,navController: NavHostController){
+fun ProductByBarcodeDetails(details : ProductbyBarcodeResponse,
+                            userData: LocalStoredData?,
+                            navController: NavHostController,
+                            likeUnlike :(String,String)->Unit,
+                            consumeProduct:(String,String,Float) -> Unit,
+                            consumeProductData:Resource<ConsumeProductResponse>,
+                            uiEvents :Flow<UiEvent>
+                            ){
 
 
     val scrollState = rememberScrollState()
-    val UserData = AuthVM.Localdata.collectAsState()
     val context = LocalContext.current
 
 
     var imageList by rememberSaveable {
-
         mutableStateOf(listOf<String>())
-
     }
 
 
@@ -103,51 +106,45 @@ fun ProductByBarcodeDetails(Details : ProductbyBarcodeResponse , AuthVM : Authen
     }
 
     var imageIndex by rememberSaveable {
-        mutableStateOf(0)
+        mutableIntStateOf(0)
     }
 
-    var hashtag by rememberSaveable {
-        mutableStateOf("#${Details.product_data.rank}")
+    val hashtag by rememberSaveable {
+        mutableStateOf("#${details.product_data.rank}")
     }
 
-    var category by rememberSaveable {
-        mutableStateOf(Details.product_data.product_sub_category)
+    val category by rememberSaveable {
+        mutableStateOf(details.product_data.product_sub_category)
     }
 
     var isLiked by rememberSaveable {
 
-        mutableStateOf(Details.product_data.isliked)
+        mutableStateOf(details.product_data.isliked)
 
     }
 
     var likeCount by rememberSaveable {
 
-        mutableStateOf(Details.product_data.likesCount)
+        mutableIntStateOf(details.product_data.likesCount)
 
     }
 
-    var RatingImageId by rememberSaveable {
+    var ratingImageId by rememberSaveable {
         mutableStateOf<Int?>(null)
     }
 
-    if(Details.product_data.ratings.product_nutriscore == "A"){
-        RatingImageId = R.drawable.arating
-    }else if(Details.product_data.ratings.product_nutriscore == "B"){
-        RatingImageId = R.drawable.brating
-    }else if(Details.product_data.ratings.product_nutriscore == "C"){
-        RatingImageId = R.drawable.crating
-    }else if(Details.product_data.ratings.product_nutriscore == "D"){
-        RatingImageId = R.drawable.drating
-    }else if(Details.product_data.ratings.product_nutriscore == "E"){
-        RatingImageId = R.drawable.erating
+
+    when(details.product_data.ratings.product_nutriscore){
+        "A"-> { ratingImageId = R.drawable.arating }
+        "B"-> { ratingImageId = R.drawable.brating }
+        "C"-> { ratingImageId = R.drawable.crating }
+        "D"-> { ratingImageId = R.drawable.drating }
+        "E"-> { ratingImageId = R.drawable.erating }
     }
 
 
-
-
-
     //for button bar slider
-    var selectedIndex by rememberSaveable { mutableStateOf(0) }
+    var selectedIndex by rememberSaveable { mutableIntStateOf(0) }
 
     val options = listOf("Nutritional value","Ingredients")
 
@@ -156,14 +153,14 @@ fun ProductByBarcodeDetails(Details : ProductbyBarcodeResponse , AuthVM : Authen
 //    for nutrition list
     val nutritionList = remember {
 
-        mutableStateOf(Details.product_data.nutritional_value)
+        mutableStateOf(details.product_data.nutritional_value)
 
     }
 
 
 
     val ingredientList by remember {
-        mutableStateOf(listOf(Details.product_data.ingredients))
+        mutableStateOf(listOf(details.product_data.ingredients))
     }
 
 
@@ -176,14 +173,11 @@ fun ProductByBarcodeDetails(Details : ProductbyBarcodeResponse , AuthVM : Authen
 
 
 
-
-
-
-
 //image slider
 Box(
 ){
 
+    //consumption card
      if(addingToConsumption){
 
 
@@ -218,14 +212,18 @@ Box(
                  )
              }
 
-             ConsumeProductCard(Details,ProductVM,UserData.value?.Token,navController)
+             ConsumeProductCard(
+                 details, consumeProduct, userData?.Token, navController,
+                 consumeProductData = consumeProductData,
+                 uiEvent = uiEvents
+             )
          }
      }
 
 
 
      Column(
-         modifier = androidx.compose.ui.Modifier
+         modifier = Modifier
              .fillMaxSize()
              .verticalScroll(scrollState)
              .background(HeetoxWhite)
@@ -250,7 +248,7 @@ Box(
 
                  AsyncImage(
                      model = imageList[index], contentDescription = "Product Image",
-                     modifier = androidx.compose.ui.Modifier
+                     modifier = Modifier
                          .size(250.dp)
                  )
 
@@ -258,12 +256,12 @@ Box(
          }
 
          Row(
-             modifier = androidx.compose.ui.Modifier
+             modifier = Modifier
 //                .offset(y = (-15).dp)
          ) {
              imageList.forEachIndexed { index, _ ->
                  Box(
-                     modifier = androidx.compose.ui.Modifier
+                     modifier = Modifier
                          .padding(horizontal = 3.dp)
                          .width(40.dp)
                          .height(7.dp)
@@ -331,9 +329,11 @@ Box(
                     .clip(RoundedCornerShape(10.dp))
                     .background(HeetoxDarkGreen)
                     .clickable {
-                        if(UserData.value?.Token?.isEmpty() == true || UserData.value?.Token == null ){
-                            Toast.makeText(context,"Login Required",Toast.LENGTH_SHORT).show()
-                        }else{
+                        if (userData?.Token?.isEmpty() == true || userData?.Token == null) {
+                            Toast
+                                .makeText(context, "Login Required", Toast.LENGTH_SHORT)
+                                .show()
+                        } else {
                             addingToConsumption = true
                         }
                     }
@@ -380,7 +380,7 @@ Box(
 
              //name and like and mrp
              Column(
-                 modifier = androidx.compose.ui.Modifier
+                 modifier = Modifier
                      .width(510.dp)
                      .padding(horizontal = 30.dp, vertical = 10.dp),
 
@@ -397,7 +397,7 @@ Box(
 
 
                      //name
-                     Text(text = Details.product_data.product_name.ifEmpty { "not available" }  ,
+                     Text(text = details.product_data.product_name.ifEmpty { "not available" }  ,
 
                          fontWeight = FontWeight.Bold,
                          fontSize = 18.sp,
@@ -411,7 +411,7 @@ Box(
 
                      //like
                      Row(
-                         modifier = androidx.compose.ui.Modifier
+                         modifier = Modifier
 //                        .fillMaxWidth()
                          ,
                          horizontalArrangement = Arrangement.End ,
@@ -421,18 +421,18 @@ Box(
                          Icon(imageVector = ImageVector.vectorResource(id = R.drawable.filledlike) , contentDescription = "",
 
                              tint = if (isLiked) Color.Red else HeetoxLightGray,
-                             modifier = androidx.compose.ui.Modifier
+                             modifier = Modifier
                                  .clickable(
                                      indication = null,
                                      interactionSource = remember { MutableInteractionSource() }
                                  ) {
 
-                                     if (UserData.value != null) {
+                                     if (userData != null) {
                                          isLiked = !isLiked
 
-                                         UserData.value?.Token?.let {
-                                             ProductVM.likeunlikeproduct(
-                                                 Details.product_data.product_barcode,
+                                         userData.Token?.let {
+                                             likeUnlike(
+                                                 details.product_data.product_barcode,
                                                  it
                                              )
                                          }
@@ -465,7 +465,7 @@ Box(
                          )
 
                          Text(text = likeCount.toString().ifEmpty { " 0" },
-                             modifier = androidx.compose.ui.Modifier
+                             modifier = Modifier
                                  .padding(horizontal = 3.dp),
                              color = HeetoxDarkGray,
                              fontWeight = FontWeight.Bold,
@@ -477,10 +477,10 @@ Box(
 
 
 
-                 Text(text = "MRP ₹${if(Details.product_data.price.toString().isNotEmpty()) Details.product_data.price.toString() else "not available"  }",
+                 Text(text = "MRP ₹${if(details.product_data.price.toString().isNotEmpty()) details.product_data.price.toString() else "not available"  }",
                      fontSize = 14.sp,
                      color = HeetoxDarkGray,
-                     modifier = androidx.compose.ui.Modifier
+                     modifier = Modifier
                          .padding(top = 5.dp)
                  )
 
@@ -491,7 +491,7 @@ Box(
 
 
 
-             Box(modifier = androidx.compose.ui.Modifier
+             Box(modifier = Modifier
                  .fillMaxWidth(.9f)
                  .padding(vertical = 5.dp)
                  .height(1.dp)
@@ -509,7 +509,7 @@ Box(
 //nutritional score and button
 
              Row(
-                 modifier = androidx.compose.ui.Modifier
+                 modifier = Modifier
                      .fillMaxWidth(1f)
                  ,
                  verticalAlignment = Alignment.Bottom,
@@ -522,14 +522,14 @@ Box(
                          fontWeight = FontWeight.Bold,
                          fontSize = 15.sp,
                          color = HeetoxDarkGray,
-                         modifier = androidx.compose.ui.Modifier
+                         modifier = Modifier
                              .padding(vertical = 10.dp, horizontal = 10.dp)
                      )
 
 
-                     if(RatingImageId != null){
-                         Image(painter = painterResource(id = RatingImageId!!), contentDescription = "Rating",
-                             modifier = androidx.compose.ui.Modifier
+                     if(ratingImageId != null){
+                         Image(painter = painterResource(id = ratingImageId!!), contentDescription = "Rating",
+                             modifier = Modifier
                                  .width(150.dp)
                          )
                      }else{
@@ -537,7 +537,7 @@ Box(
                              fontWeight = FontWeight.Bold,
                              fontSize = 15.sp,
                              color = HeetoxDarkGray,
-                             modifier = androidx.compose.ui.Modifier
+                             modifier = Modifier
                                  .padding(vertical = 15.dp, horizontal = 10.dp)
                          )
                      }
@@ -546,8 +546,8 @@ Box(
 
                  Button(onClick = {
 
-                     val maincategory = Details.product_data.product_category.replace(" ","_")
-                     val subcategory = Details.product_data.product_sub_category.replace(" ","_")
+                     val maincategory = details.product_data.product_category.replace(" ","_")
+                     val subcategory = details.product_data.product_sub_category.replace(" ","_")
 
                      navController.navigate("betteralternative/${maincategory}/${subcategory}")
 
@@ -582,7 +582,7 @@ Box(
 
              //Nutritional values and ingredients
 
-             Spacer(modifier = androidx.compose.ui.Modifier
+             Spacer(modifier = Modifier
                  .height(30.dp))
 
              SegmentedControl(
@@ -632,15 +632,15 @@ Box(
 
 
     //image adding
-    LaunchedEffect(key1 = Details) {
+    LaunchedEffect(key1 = details) {
 
         imageList = emptyList()
 
-        if(Details.product_data.product_front_image.isNotEmpty()){
-            imageList = imageList + Details.product_data.product_front_image
+        if(details.product_data.product_front_image.isNotEmpty()){
+            imageList = imageList + details.product_data.product_front_image
         }
-        if(Details.product_data.product_back_image.isNotEmpty()){
-            imageList = imageList + Details.product_data.product_back_image
+        if(details.product_data.product_back_image.isNotEmpty()){
+            imageList = imageList + details.product_data.product_back_image
         }
     }
 
@@ -2207,15 +2207,15 @@ data.forEach {
                     .fillMaxWidth()
                 ,
                 verticalAlignment = Alignment.CenterVertically
-            ){
+            ) {
 
-                Text(text = it.name,
+                Text(
+                    text = it.name,
                     color = Color.Black,
                     fontSize = 15.sp,
                     modifier = Modifier
                         .weight(1f)
                 )
-
 
                 if (it.description != null) {
                     Icon(
@@ -2227,12 +2227,12 @@ data.forEach {
                             interactionSource = remember {
                                 MutableInteractionSource()
                             }
-                        ){
+                        ) {
                             expandedItem = if (expandedItem == it.name) null else it.name
                         }
                     )
-                }
 
+                }
             }
 
             AnimatedVisibility(visible = expandedItem == it.name) {
@@ -2301,136 +2301,6 @@ data.forEach {
 
 
 
-
-
-
-
-
-
-
-@Composable
-fun AlternativeList(ProductVM: ProductsViewModel, token : String, UserData : State<LocalStoredData?>, navController: NavHostController,barcode :String
-){
-
-
-
-
-
-    val data = ProductVM.AlternativeProductData.collectAsState()
-    val datalist = data.value.data?.take(6)
-    val context = LocalContext.current
-
-    var isApiCalled by rememberSaveable {
-        mutableStateOf(false)
-    }
-
-
-
-    if(isApiCalled == false) {
-
-        LaunchedEffect(key1 = barcode) {
-
-            datalist?.get(0)?.let { ProductVM.getalternativeproducts(it.product_category, token) }
-
-
-        }
-
-        isApiCalled = true
-
-
-
-    }
-
-
-
-    if (datalist != null) {
-
-
-
-        Column {
-
-
-            Text(text = "Alternatives",
-                fontSize = 15.sp,
-                color = HeetoxDarkGray,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier
-                    .padding(10.dp)
-                )
-
-
-            datalist.forEach {
-
-                    data ->
-
-                var isLiked by remember { mutableStateOf(data.isliked) }
-                var likeCount by remember { mutableStateOf(data.likesCount) }
-
-
-                ProductCard(
-                    data = data,
-                    ProductVM = ProductVM,
-                    UserData = UserData,
-                    context = context,
-                    navController,
-                    isLiked = isLiked,
-                    likeCount = likeCount ,
-                    onLikeCountChange = { likeCount = it },
-                    onLikeChange = { isLiked = it }
-                )
-
-
-            }
-        }
-
-
-
-        Button(onClick = {
-
-            navController.navigate("productlist/${data.value.data?.get(0)?.product_category}")
-
-        }) {
-
-
-            Text(text = "See More")
-
-        }
-
-
-
-    }
-
-
-
-
-
-
-
-    LaunchedEffect(key1 = data.value) {
-
-        when(data.value){
-
-            is Resource.Error -> {
-
-            }
-            is Resource.Loading -> {
-
-            }
-            is Resource.Nothing -> {
-
-            }
-            is Resource.Success -> {
-
-
-
-            }
-
-
-        }
-
-    }
-
-}
 
 
 

@@ -11,25 +11,12 @@ import com.heetox.app.Model.Post.bookmarkpostresponse
 import com.heetox.app.Model.Post.postlikedislikeresponse
 import com.heetox.app.Utils.Resource
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import javax.inject.Inject
 
 
 class PostRepository @Inject constructor(
     private val apiService: PostInterface
 ) {
-
-    
-    private val postlikedislikeresponse = MutableStateFlow<Resource<postlikedislikeresponse>>(Resource.Nothing())
-    
-    val accessPostLikeDislikeResponse : StateFlow<Resource<postlikedislikeresponse>>
-        get() = postlikedislikeresponse
-
-    private val boommarkresponse = MutableStateFlow<Resource<bookmarkpostresponse>>(Resource.Nothing())
-
-    val accessbookmarkrepsonse : StateFlow<Resource<bookmarkpostresponse>>
-        get() = boommarkresponse
 
 
     fun getPosts(authToken: String): Flow<PagingData<Post>> {
@@ -40,68 +27,51 @@ class PostRepository @Inject constructor(
     }
 
 
-
-
-
     
-    suspend fun postLikeDislike(postid: String,Authorization:String){
-        
-        postlikedislikeresponse.emit(Resource.Loading())
+    suspend fun postLikeDislike(postId: String, authorization:String):Resource<postlikedislikeresponse>{
 
         try {
-            val response = apiService.likeDislikePost(postid, Authorization)
+            val response = apiService.likeDislikePost(postId, authorization)
 
             if (response.isSuccessful && response.body() != null) {
-                postlikedislikeresponse.emit(Resource.Success(response.body()!!.data))
+
+                return Resource.Success(response.body()!!.data)
+
             } else {
 
-                postlikedislikeresponse.emit(Resource.Error("Something went wrong"))
+                return Resource.Error("Something went wrong")
 
             }
 
         }catch (e:Exception){
             
-            postlikedislikeresponse.emit(Resource.Error("Something went wrong"))
+            return Resource.Error("Something went wrong")
 //            Log.d("post repo", "postLikeDislike: $e")
             
         }
-        
-        
+
     }
 
 
 
-
-
-    suspend fun bookmarkPost( PostId:String , Authorization:String ){
-
-
-        boommarkresponse.emit(Resource.Loading())
+    suspend fun bookmarkPost( postId:String , authorization:String ):Resource<bookmarkpostresponse>{
 
         try {
-            val response = apiService.bookmarkPost(PostId, Authorization)
+            val response = apiService.bookmarkPost(postId, authorization)
 
-            if (response.isSuccessful && response.body() != null) {
-                boommarkresponse.emit(Resource.Success(response.body()!!.data))
+            return if (response.isSuccessful && response.body() != null){
+                Resource.Success(response.body()!!.data)
             } else {
-
-                boommarkresponse.emit(Resource.Error("Something went wrong"))
-
+                Resource.Error("Something went wrong")
             }
 
         }catch (e:Exception){
 
-            boommarkresponse.emit(Resource.Error("Something went wrong"))
+            return Resource.Error("Something went wrong")
 //            Log.d("post repo", "bookmark post : $e")
-
         }
 
-
-
     }
-    
-    
-    
 
 
 
@@ -120,8 +90,8 @@ class PostsPagingSource(
 
             val page = params.key ?: 1
             val response = apiService.getAllPosts(page, params.loadSize, authToken)
-            val prevkey = if (response.body()?.data?.hasPrevPage != true) null else page - 1
-            val nextkey = if (response.body()?.data?.hasNextPage != true) null else page + 1
+            val prevKey = if (response.body()?.data?.hasPrevPage != true) null else page - 1
+            val nextKey = if (response.body()?.data?.hasNextPage != true) null else page + 1
 
 
 
@@ -129,8 +99,8 @@ class PostsPagingSource(
                 val posts = response.body()?.data?.posts ?: emptyList()
                 LoadResult.Page(
                     data = posts,
-                    prevKey = prevkey,
-                    nextKey = nextkey
+                    prevKey = prevKey,
+                    nextKey = nextKey
                 )
             } else {
                 LoadResult.Error(Exception("Error fetching posts"))

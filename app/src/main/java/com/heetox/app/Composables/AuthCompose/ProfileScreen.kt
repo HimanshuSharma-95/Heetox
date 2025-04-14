@@ -8,22 +8,27 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
-import com.heetox.app.ViewModel.Authentication.AuthenticationViewModel
+import com.heetox.app.Model.Authentication.LocalStoredData
+import com.heetox.app.Model.Product.LikedProductRepsonse
+import com.heetox.app.Utils.Resource
+import com.heetox.app.Utils.UiEvent
 import com.heetox.app.ui.theme.HeetoxWhite
-
+import kotlinx.coroutines.flow.Flow
 
 
 @Composable
-fun ProfileInputs(navController: NavHostController , viewmodel: AuthenticationViewModel){
+fun ProfileInputs(navController: NavHostController, userData: LocalStoredData?,
+                  getLikedProducts:(String)->Unit,
+                  uiEvent: Flow<UiEvent>,
+                  likedProductsData : Resource<LikedProductRepsonse>
+){
 
 
-    var UserData = viewmodel.Localdata.collectAsState()
     val scrollState = rememberScrollState()
 
     Box ( modifier = Modifier
@@ -55,17 +60,23 @@ fun ProfileInputs(navController: NavHostController , viewmodel: AuthenticationVi
 
 
 
-            if(UserData.value == null){
+            if(userData == null){
 
                 LoginAndRegisterCard(navController)
 
             }else{
-                UserProfileCard(navController)
+                UserProfileCard(
+                    navController, userData,
+                    getLikedProducts = {
+                        getLikedProducts(it)
+                    },
+                    uiEvent = uiEvent,
+                    likedProductsData = likedProductsData
+                )
             }
 
 
             }
-
         }
     }
 

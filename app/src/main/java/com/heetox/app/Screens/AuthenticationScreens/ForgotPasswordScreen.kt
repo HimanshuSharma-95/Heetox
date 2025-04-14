@@ -17,8 +17,8 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -30,24 +30,25 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.heetox.app.Composables.AuthCompose.Input
 import com.heetox.app.Composables.AuthCompose.LoadingOverlay
-import com.heetox.app.Utils.Resource
-import com.heetox.app.ViewModel.Authentication.AuthenticationViewModel
+import com.heetox.app.Utils.Action
+import com.heetox.app.Utils.UiEvent
 import com.heetox.app.ui.theme.HeetoxDarkGray
 import com.heetox.app.ui.theme.HeetoxDarkGreen
 import com.heetox.app.ui.theme.HeetoxGreen
 import com.heetox.app.ui.theme.HeetoxWhite
+import kotlinx.coroutines.flow.Flow
 
 
 //@Preview()
 @Composable
-fun Forgotpasswordscreen(navController: NavHostController){
+fun ForgotPasswordScreen(navController: NavHostController,
+                         forgotPassword:(String) -> Unit,
+                         uiEvent:Flow<UiEvent> ){
 
-    val viewmodel : AuthenticationViewModel = hiltViewModel()
-    val ForgotPasswordData = viewmodel.ForgotPasswordData.collectAsState()
+
     val scrollState = rememberScrollState()
 
     var email by rememberSaveable {
@@ -59,10 +60,10 @@ fun Forgotpasswordscreen(navController: NavHostController){
     }
 
     var step by rememberSaveable {
-        mutableStateOf(1)
+        mutableIntStateOf(1)
     }
 
-    var laoding by rememberSaveable {
+    var loading by rememberSaveable {
         mutableStateOf(false)
     }
 
@@ -70,8 +71,8 @@ fun Forgotpasswordscreen(navController: NavHostController){
 
 
 
-    if(laoding){
-        LoadingOverlay(isLoading = laoding)
+    if(loading){
+        LoadingOverlay(isLoading = loading)
     }else{
 
 
@@ -160,7 +161,7 @@ fun Forgotpasswordscreen(navController: NavHostController){
                             Input(label = "Email", value = email, onValueChange = {email = it})
 
 
-                            val emailregex = Regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
+                            val emailRegex = Regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
 
 
                             Spacer(modifier = Modifier
@@ -168,18 +169,11 @@ fun Forgotpasswordscreen(navController: NavHostController){
                             )
 
                             Button(onClick = {
-
-                                if(emailregex.matches(email.trim())){
-
-                                    viewmodel.forgotpassword(email)
-
+                                if(emailRegex.matches(email.trim())){
+                                    forgotPassword(email)
                                 }else{
-
                                     error = "Email is not correct"
-
                                 }
-
-
                             },
 
                                 modifier = Modifier
@@ -257,22 +251,11 @@ fun Forgotpasswordscreen(navController: NavHostController){
 
                     }
 
-
-
-
-
-
                 }
-
-
-
 
             }
 
-
-
         }
-
 
     }
 
@@ -280,42 +263,37 @@ fun Forgotpasswordscreen(navController: NavHostController){
 
 
 
+    LaunchedEffect(Unit) {
+        uiEvent.collect { event ->
+            when (event) {
+                is UiEvent.Loading -> {
+                    if (event.action == Action.ForgotPassword) {
+                        error = "Sending Email"
+                        loading = true
+                    }
+                }
 
+                is UiEvent.Success -> {
+                    if (event.action == Action.ForgotPassword) {
+                        error = ""
+                        step = 2
+                        loading = false
+                    }
+                }
 
+                is UiEvent.Error -> {
+                    if (event.action == Action.ForgotPassword) {
+                        error = event.message
+                        loading = false
+                    }
+                }
 
-
-
-
-    LaunchedEffect(key1 = ForgotPasswordData.value) {
-
-        when(ForgotPasswordData.value){
-
-            is Resource.Error -> {
-                error = ForgotPasswordData.value.error.toString()
-                laoding = false
+                is UiEvent.Idle -> {
+                    error = ""
+                    loading = false
+                }
             }
-            is Resource.Loading -> {
-
-                error = "Sending Email"
-                laoding = true
-
-            }
-            is Resource.Nothing -> {
-
-                error = ""
-                laoding = false
-
-            }
-            is Resource.Success -> {
-
-                error = ""
-                step = 2
-                laoding = false
-
-            }
-
         }
-
     }
 
 

@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,14 +36,13 @@ import coil.compose.AsyncImage
 import com.heetox.app.Model.Authentication.LocalStoredData
 import com.heetox.app.Model.Product.AlternateResponseItem
 import com.heetox.app.R
-import com.heetox.app.ViewModel.ProductsVM.ProductsViewModel
 import com.heetox.app.ui.theme.HeetoxDarkGray
 import com.heetox.app.ui.theme.HeetoxDarkGreen
 
 
 @Composable
 fun ProductCard(
-    data: AlternateResponseItem, ProductVM:ProductsViewModel, UserData: State<LocalStoredData?>,
+    data: AlternateResponseItem, userData: LocalStoredData?,
     context: Context,
     navController: NavController,
     isLiked: Boolean,
@@ -129,7 +127,7 @@ ProductCardImage(Image = data.product_front_image, name = data.product_name )
 
 
 // rank and rating
-      ProductsCardRankAndRaing(nutriscore = data.product_nutriscore, rank = data.rank )
+      ProductsCardRankAndRating(nutritionalScore = data.product_nutriscore, rank = data.rank )
 
 
 
@@ -163,12 +161,11 @@ ProductCardImage(Image = data.product_front_image, name = data.product_name )
         ProductCardPriceAndLike(
             price = data.price,
             isLiked = isLiked,
-            UserData = UserData,
+            userData = userData,
             context = context,
             onLikeChange = onLikeChange,
             likeCount = likeCount,
             onLikeCountChange = onLikeCountChange,
-            ProductVM = ProductVM,
             barcodes = data.product_barcode
         )
 
@@ -235,7 +232,7 @@ fun ProductCardImage(Image : String, name : String){
 
 
 @Composable
-fun ProductsCardRankAndRaing(nutriscore : String,rank : Int ){
+fun ProductsCardRankAndRating(nutritionalScore : String, rank : Int ){
 
 
 
@@ -255,24 +252,25 @@ fun ProductsCardRankAndRaing(nutriscore : String,rank : Int ){
             color = HeetoxDarkGreen,
         )
 
-        when(nutriscore){
+        val ratingImageRes = when (nutritionalScore) {
+            "A" -> R.drawable.arating
+            "B" -> R.drawable.brating
+            "C" -> R.drawable.crating
+            "D" -> R.drawable.drating
+            "E" -> R.drawable.erating
+            else -> null
+        }
 
-            "A" -> AsyncImage(model = R.drawable.arating, contentDescription = "Rating Image", modifier = Modifier
-                .width(110.dp)
-                .padding(end = 10.dp) )
-            "B" -> AsyncImage(model = R.drawable.brating, contentDescription = "Rating Image" , modifier = Modifier
-                .width(110.dp)
-                .padding(end = 10.dp))
-            "C" -> AsyncImage(model = R.drawable.crating, contentDescription = "Rating Image",modifier = Modifier
-                .width(110.dp)
-                .padding(end = 10.dp))
-            "D" -> AsyncImage(model = R.drawable.drating, contentDescription = "Rating Image",modifier = Modifier
-                .width(110.dp)
-                .padding(end = 10.dp))
-            "E" -> AsyncImage(model = R.drawable.erating, contentDescription = "Rating Image",modifier = Modifier
-                .width(110.dp)
-                .padding(end = 10.dp))
-            else -> Text(text = "Rating NA")
+        if (ratingImageRes != null) {
+            AsyncImage(
+                model = ratingImageRes,
+                contentDescription = "Rating Image",
+                modifier = Modifier
+                    .width(110.dp)
+                    .padding(end = 10.dp)
+            )
+        } else {
+            Text(text = "Rating NA")
         }
 
     }
@@ -358,13 +356,13 @@ fun ProductCardIngredeints(ingredients : List<String>){
 
 
 @Composable
-fun ProductCardPriceAndLike( price : Int,
-                             isLiked: Boolean,UserData : State<LocalStoredData?>,
-                             context : Context,
-                             onLikeChange: (Boolean) -> Unit,likeCount: Int,
-                             onLikeCountChange: (Int) -> Unit,
-                             ProductVM: ProductsViewModel,
-                             barcodes : String
+fun ProductCardPriceAndLike(price: Int,
+                            isLiked: Boolean,
+                            userData: LocalStoredData?,
+                            context: Context,
+                            onLikeChange: (Boolean) -> Unit, likeCount: Int,
+                            onLikeCountChange: (Int) -> Unit,
+                            barcodes: String
                              ){
 
     Row(
@@ -376,7 +374,7 @@ fun ProductCardPriceAndLike( price : Int,
 
     ){
 
-        Text(text = if(price != 0) "₹ ${price}" else "Price NA",
+        Text(text = if(price != 0) "₹ $price" else "Price NA",
             fontSize = 14.sp,
             color = HeetoxDarkGray,
             fontWeight = FontWeight.Bold

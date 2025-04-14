@@ -1,10 +1,10 @@
 package com.heetox.app.Repository.AuthenticationRepository
 
 import android.content.SharedPreferences
-import com.heetox.app.Model.Authentication.LocalStoredData
 import com.google.gson.Gson
+import com.heetox.app.Model.Authentication.LocalStoredData
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -13,45 +13,41 @@ class SharedPreferenceRepository @Inject constructor(
     private val sharedPreferences: SharedPreferences
 ) {
 
+    private val _tokenFlow = MutableStateFlow<String?>(getToken()?.Token)
+    val tokenFlow = _tokenFlow.asStateFlow()
 
-    private var LocalData = MutableStateFlow<LocalStoredData?>(null)
-
-    val accessLocalData : StateFlow<LocalStoredData?>
-        get() = LocalData
-
-
-    suspend fun saveToken(data : LocalStoredData) {
+    fun saveToken(data : LocalStoredData):LocalStoredData?{
 
         val gson = Gson()
         val json = gson.toJson(data)
         sharedPreferences.edit().putString("UserData",json).apply()
 
-        LocalData.emit(if(json != null){
-            gson.fromJson(json,LocalStoredData::class.java)
+        return if(json != null){
+            val savedData = gson.fromJson(json,LocalStoredData::class.java)
+            _tokenFlow.value = savedData?.Token
+            savedData
         }else{
             null
-        })
+        }
 
     }
 
-    suspend fun getToken(){
+     fun getToken():LocalStoredData?{
 
       val gson = Gson()
         val json = sharedPreferences.getString("UserData", null)
 
-        LocalData.emit(if(json != null){
+        return if(json != null){
             gson.fromJson(json,LocalStoredData::class.java)
         }else{
-            null
-        })
+             null
+        }
 
     }
 
-   suspend fun removeToken(){
-
+    fun removeToken(){
         sharedPreferences.edit().putString("UserData", null).apply()
-        LocalData.emit(null)
-
+        _tokenFlow.value = ""
     }
 
 }

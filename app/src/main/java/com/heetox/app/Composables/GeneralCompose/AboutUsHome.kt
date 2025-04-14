@@ -31,7 +31,7 @@ import com.heetox.app.ui.theme.HeetoxLightGray
 
 
 @Composable
-fun AboutusHome(navContoller:NavHostController){
+fun AboutUsHome(navController:NavHostController){
 
 
     Column(
@@ -78,7 +78,7 @@ Column(
 
 
     Button(onClick = {
-navContoller.navigate("aboutus")
+navController.navigate("aboutus")
     },
         colors = ButtonDefaults.buttonColors(
 

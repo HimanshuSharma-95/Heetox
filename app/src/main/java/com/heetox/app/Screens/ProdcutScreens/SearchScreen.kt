@@ -1,7 +1,6 @@
 package com.heetox.app.Screens.ProdcutScreens
 
 import android.widget.Toast
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -40,21 +39,19 @@ import androidx.navigation.NavHostController
 import com.heetox.app.ui.theme.HeetoxWhite
 
 @Composable
-fun Searchscreen(navController: NavHostController){
+fun SearchScreen(navController: NavHostController){
 
 
-    BackHandler {
-
-
-
-        navController.navigate("home") {
-            popUpTo(navController.graph.startDestinationId) {
-                inclusive = true
-            }
-            launchSingleTop = true
-        }
-
-    }
+//    BackHandler {
+//
+//        navController.navigate("home") {
+//            popUpTo(navController.graph.startDestinationId) {
+//                inclusive = true
+//            }
+//            launchSingleTop = true
+//        }
+//
+//    }
 
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -90,9 +87,10 @@ fun Searchscreen(navController: NavHostController){
                     keyboardController?.hide()
 
                     if(searchQuery.isNotEmpty()){
-                        navController.navigate("searchproductlist/${searchQuery}"){
-                            popUpTo("search") { inclusive = true }
-                        }
+                        navController.navigate("searchproductlist/${searchQuery}")
+//                        {
+//                            popUpTo("search") { inclusive = true }
+//                        }
                     }else{
                         Toast.makeText(navController.context, "Please enter something to search", Toast.LENGTH_SHORT).show()
                     }

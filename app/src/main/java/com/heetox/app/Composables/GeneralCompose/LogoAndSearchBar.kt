@@ -25,7 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -50,12 +50,10 @@ fun LogoAndSearchBar(
 
 
     var index by rememberSaveable {
-        mutableStateOf(0)
+        mutableIntStateOf(0)
     }
 
-    val itemlist = listOf("Lays","Peanut Butter","Chips","Red Bull","Protein Bars")
-
-
+    val itemList = listOf("Lays","Peanut Butter","Chips","Red Bull","Protein Bars")
 
 
 
@@ -130,7 +128,7 @@ fun LogoAndSearchBar(
 
 
                 AnimatedContent(
-                    targetState = itemlist[index],
+                    targetState = itemList[index],
                     transitionSpec = {
 
                         (slideInVertically(initialOffsetY = { it }) + fadeIn(tween(durationMillis = 500))).togetherWith(
@@ -170,7 +168,7 @@ tint = HeetoxDarkGray,
 
         while(true) {
             delay(2500)
-            index = (index + 1) % itemlist.size
+            index = (index + 1) % itemList.size
         }
 
         }

@@ -6,7 +6,7 @@ import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.map
 import com.heetox.app.Model.Post.Post
-import com.heetox.app.Repository.AuthenticationRepository.AuthenticationRepository
+import com.heetox.app.Repository.AuthenticationRepository.SharedPreferenceRepository
 import com.heetox.app.Repository.PostRepository.PostRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -19,17 +19,16 @@ import javax.inject.Inject
 @HiltViewModel
 class PostsViewModel @Inject constructor(
     private val postRepository: PostRepository,
-    authRepository: AuthenticationRepository
+    tokenRepo : SharedPreferenceRepository
 ) : ViewModel() {
 
 
-    private val tokenFlow = authRepository.Localdata.map { it?.Token ?: "" }
+    private val tokenFlow = tokenRepo.tokenFlow.map { it ?: "" }
     private var currentToken: String = ""
 
 
     init {
         // Observe token changes
-        //if same token keeps the
         viewModelScope.launch {
             tokenFlow.collect { newToken ->
                 if (currentToken != newToken) {
@@ -43,6 +42,7 @@ class PostsViewModel @Inject constructor(
     }
 
 
+
         var currentResult: Flow<PagingData<Post>>? = null
 
         var scrollIndex = 0
@@ -53,7 +53,7 @@ class PostsViewModel @Inject constructor(
         val postState: Map<String, PostState> = _postState
 
 
-    fun getPosts(authToken: String): Flow<PagingData<Post>> {
+    private fun getPosts(authToken: String): Flow<PagingData<Post>> {
 
 
         // If we have a cached result, return it directly
@@ -81,8 +81,7 @@ class PostsViewModel @Inject constructor(
 
 
 
-
- fun getNewPostToken(authToken : String): Flow<PagingData<Post>> {
+ private fun getNewPostToken(authToken : String): Flow<PagingData<Post>> {
 
         // Fetch new data and populate PostState with data from the API
         val newResult: Flow<PagingData<Post>> = postRepository.getPosts(authToken)
@@ -104,18 +103,13 @@ class PostsViewModel @Inject constructor(
         currentResult = newResult
         return newResult
 
-
-    }
-
-
-
+}
 
 
 
     fun saveScrollPosition(index: Int, offset: Int) {
         scrollIndex = index
         scrollOffset = offset
-
     }
 
     fun updatePostState(postId: String, isLiked: Boolean, isBookmarked: Boolean, likeCount: Int) {
@@ -126,20 +120,16 @@ class PostsViewModel @Inject constructor(
         return _postState[postId] ?: PostState()
     }
 
-
-    fun likedislikepost(authToken: String, postId: String){
-
+    fun likeDislikePost(authToken: String, postId: String){
        viewModelScope.launch(Dispatchers.IO){
            postRepository.postLikeDislike(postId,authToken)
        }
-
     }
 
-
-    fun bookmarkpost(postid:String,Authorization : String){
+    fun bookMarkPost(postId:String, authorization : String){
 
         viewModelScope.launch(Dispatchers.IO){
-            postRepository.bookmarkPost(postid,Authorization)
+            postRepository.bookmarkPost(postId,authorization)
         }
 
     }

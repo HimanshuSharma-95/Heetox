@@ -64,38 +64,42 @@ import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.heetox.app.Composables.AuthCompose.ProfileInputs
+import com.heetox.app.Model.Authentication.LocalStoredData
 import com.heetox.app.Model.Authentication.NavDrawer
-import com.heetox.app.Utils.Resource
-import com.heetox.app.ViewModel.Authentication.AuthenticationViewModel
+import com.heetox.app.R
+import com.heetox.app.Utils.Action
+import com.heetox.app.Utils.UiEvent
+import com.heetox.app.ViewModel.ProductsVM.ProductsViewModel
 import com.heetox.app.ui.theme.HeetoxDarkGray
 import com.heetox.app.ui.theme.HeetoxGreen
 import com.heetox.app.ui.theme.HeetoxLightGray
 import com.heetox.app.ui.theme.HeetoxWhite
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileBarwithScreen(navController: NavHostController){
+fun ProfileBarWithScreen(navController: NavHostController,
+                         userData:LocalStoredData?,
+                         logoutUser:(String) -> Unit,
+                         uiEvent : Flow<UiEvent>
+                         ){
 
 
-    //for logout
-    val viewmodel : AuthenticationViewModel = hiltViewModel()
-    var UserData = viewmodel.Localdata.collectAsState()
-    var LogoutUser = viewmodel.Logoutuser.collectAsState()
+
     val context = LocalContext.current
+    val loginItems : List<NavDrawer>
 
+    val productVM : ProductsViewModel = hiltViewModel()
+    val likedProductsData = productVM.likedProductsData.collectAsState().value
+    val token = userData?.Token ?: ""
 
+    if(userData != null){
 
+        if(userData.EmailStatus){
 
-    var loginitems : List<NavDrawer> = emptyList()
-
-
-    if(UserData.value != null){
-
-        if(UserData.value!!.EmailStatus){
-
-            loginitems = listOf(
+            loginItems = listOf(
                 NavDrawer(
                     title = "Update Profile",
                     SelectedIcon = Icons.Filled.Edit,
@@ -124,7 +128,7 @@ fun ProfileBarwithScreen(navController: NavHostController){
             )
         }else{
 
-            loginitems = listOf(
+            loginItems = listOf(
                 NavDrawer(
                     title = "Update Profile",
                     SelectedIcon = Icons.Filled.Edit,
@@ -163,7 +167,7 @@ fun ProfileBarwithScreen(navController: NavHostController){
 
     }else{
 
-        loginitems = listOf(
+        loginItems = listOf(
             NavDrawer(
                 title = "Update Profile",
                 SelectedIcon = Icons.Filled.ModeEdit,
@@ -256,7 +260,7 @@ ModalDrawerSheet(
 
    ){
 
-       if(UserData.value == null){
+       if(userData == null){
 
            logoutitems.forEachIndexed { index, item ->
 
@@ -310,7 +314,7 @@ ModalDrawerSheet(
            }
 
        }else{
-           loginitems.forEachIndexed { index, item ->
+           loginItems.forEachIndexed { index, item ->
 
                NavigationDrawerItem(
                    modifier = Modifier
@@ -326,7 +330,7 @@ ModalDrawerSheet(
 
                        if(item.route == "logout"){
 
-                           viewmodel.logoutuser(UserData.value?.Token.toString())
+                           logoutUser(token)
 
                        }else{
                            navController.navigate(item.route.toString())
@@ -379,7 +383,7 @@ ModalDrawerSheet(
               topBar = {
                   TopAppBar(
                       title = { 
-                              Image(painter = painterResource(id = com.heetox.app.R.drawable.heetoxlogobg), contentDescription ="logo",
+                              Image(painter = painterResource(id = R.drawable.heetoxlogobg), contentDescription ="logo",
                                   modifier = Modifier
                                       .size(100.dp)
                                   )
@@ -415,8 +419,14 @@ ModalDrawerSheet(
 
 
                Column {
-
-                   ProfileInputs(navController = navController,viewmodel)
+                   ProfileInputs(
+                       navController = navController, userData,
+                       getLikedProducts = {
+                           productVM.getLikedProducts(it)
+                       },
+                       uiEvent = productVM.uiEvent,
+                       likedProductsData = likedProductsData
+                   )
                    Box(modifier = Modifier
                        .fillMaxSize()
                        .background(HeetoxWhite)
@@ -438,33 +448,35 @@ ModalDrawerSheet(
 
 
 
+    LaunchedEffect(Unit){
+        uiEvent.collect { event ->
+            when (event) {
+                is UiEvent.Loading -> { }
 
-
-//logout
-    LaunchedEffect(key1 = LogoutUser.value) {
-
-        when(LogoutUser.value){
-
-            is Resource.Error -> {
-
-                Toast.makeText(context, "Couldn't log out Try again", Toast.LENGTH_SHORT).show()
-
-            }
-
-            is Resource.Loading -> {}
-
-            is Resource.Nothing -> {}
-
-            is Resource.Success -> {
-
-//                navController.navigate("profile")
+                is UiEvent.Success -> {
+                    when (event.action) {
+                        Action.Logout -> {
+//                  navController.navigate("profile")
                 Toast.makeText(context, "Logged Out", Toast.LENGTH_SHORT).show()
 
+                        }
+                        else->{}
+                    }
+                }
+
+                is UiEvent.Error -> {
+                    when (event.action) {
+                        Action.Logout -> {
+                            Toast.makeText(context, "Couldn't log out. Try again.", Toast.LENGTH_SHORT).show()
+                        }
+                        else-> Unit
+                    }
+                }
+                UiEvent.Idle -> Unit
             }
-
         }
-
     }
+
 
 }
 

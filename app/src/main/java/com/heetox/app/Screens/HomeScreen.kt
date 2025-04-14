@@ -16,24 +16,26 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
-import com.heetox.app.Composables.GeneralCompose.AboutusHome
+import com.heetox.app.Composables.GeneralCompose.AboutUsHome
 import com.heetox.app.Composables.GeneralCompose.CategoriesHome
 import com.heetox.app.Composables.GeneralCompose.LogoAndSearchBar
 import com.heetox.app.Composables.GeneralCompose.TextAndScanHome
 import com.heetox.app.Composables.ProductCompose.MostScannedProductsSix
-import com.heetox.app.ViewModel.Authentication.AuthenticationViewModel
-import com.heetox.app.ViewModel.ProductsVM.ProductsViewModel
+import com.heetox.app.Model.Authentication.LocalStoredData
+import com.heetox.app.ViewModel.ProductsVM.HomeScreenViewModel
 import com.heetox.app.ui.theme.HeetoxWhite
 
 
 @Composable
-fun Homescreen(navController: NavHostController,Productviewmodel: ProductsViewModel){
+fun HomeScreen(navController: NavHostController, userData: LocalStoredData?){
 
-    val Authviewmodel : AuthenticationViewModel = hiltViewModel()
+    val homeScreenVM : HomeScreenViewModel = hiltViewModel()
+
     val scrollState = rememberScrollState()
-    val UserData = Authviewmodel.Localdata.collectAsState()
+    val name = userData?.Name
 
-    val name = UserData.value?.Name
+    val categoriesData = homeScreenVM.categoriesData.collectAsState().value
+    val mostScannedProductsData = homeScreenVM.mostScannedProductsData.collectAsState().value
 
     // Remember the swipe refresh state
     val swipeRefreshState = rememberSwipeRefreshState(isRefreshing = false)
@@ -44,8 +46,8 @@ fun Homescreen(navController: NavHostController,Productviewmodel: ProductsViewMo
         onRefresh = {
             // Trigger the refresh logic here
             // e.g., reloading the data from your ViewModel
-            Productviewmodel.getcategories()
-            Productviewmodel.getmostscannedproducts()
+            homeScreenVM.getCategories()
+            homeScreenVM.getMostScannedProducts()
 
             // Example function, replace with actual implementation
             swipeRefreshState.isRefreshing = false // Stop refreshing after the logic is complete
@@ -68,7 +70,7 @@ fun Homescreen(navController: NavHostController,Productviewmodel: ProductsViewMo
             Spacer(modifier = Modifier.height(10.dp))
 
             //categories
-            CategoriesHome(Productviewmodel, navController)
+            CategoriesHome(categoriesData,navController,homeScreenVM.uiEvent)
 
 
             //Text and Scan
@@ -76,11 +78,11 @@ fun Homescreen(navController: NavHostController,Productviewmodel: ProductsViewMo
 
 
             //Most Scanned Products 6
-            MostScannedProductsSix(navController, Productviewmodel)
+            MostScannedProductsSix(navController,mostScannedProductsData,homeScreenVM.uiEvent)
 
 
             //about us
-            AboutusHome(navController)
+            AboutUsHome(navController)
 
 
             Spacer(modifier = Modifier.height(10.dp))

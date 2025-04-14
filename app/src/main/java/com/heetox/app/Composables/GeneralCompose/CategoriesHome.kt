@@ -1,6 +1,5 @@
 package com.heetox.app.Composables.GeneralCompose
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -12,11 +11,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -24,28 +24,28 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.heetox.app.R
+import com.heetox.app.Model.Product.CategoriesResponse
+import com.heetox.app.Utils.Action
 import com.heetox.app.Utils.Resource
-import com.heetox.app.ViewModel.ProductsVM.ProductsViewModel
+import com.heetox.app.Utils.UiEvent
+import com.heetox.app.ui.theme.HeetoxBrightGreen
 import com.heetox.app.ui.theme.HeetoxDarkGray
 import com.heetox.app.ui.theme.HeetoxWhite
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 
 
 @Composable
-fun CategoriesHome(Productviewmodel : ProductsViewModel,navController: NavController){
+fun CategoriesHome(categoriesData : Resource<CategoriesResponse>, navController: NavController,uiEvents:Flow<UiEvent>){
 
-    val CategoriesData = Productviewmodel.CategoriesData.collectAsState()
-    val CategoriesList = CategoriesData.value.data?.categories
+    val categoriesList = categoriesData.data?.categories
 
-    var Loading by rememberSaveable {
+    var loading by rememberSaveable {
         mutableStateOf(true)
     }
 
@@ -64,166 +64,159 @@ fun CategoriesHome(Productviewmodel : ProductsViewModel,navController: NavContro
             .background(Color.White)
 
 
-    ){
+    ) {
 
-        Text( text = "Categories",
+        Text(
+            text = "Categories",
             fontSize = 17.sp,
-color = HeetoxDarkGray,
+            color = HeetoxDarkGray,
             modifier = Modifier
-                .padding(15.dp,20.dp,0.dp,0.dp)
-            )
+                .padding(15.dp, 20.dp, 0.dp, 0.dp)
+        )
 
 
 
 
-      if(Loading || error == "Sorry Couldn't Load Categories"){
+        if (loading || error.isNotEmpty()) {
 
-          var degree by remember { mutableStateOf(0) }
+            var degree by remember { mutableIntStateOf(0) }
 
-         if(Loading){
-             Column(
-                 modifier = Modifier
-                     .fillMaxWidth()
-                     .fillMaxHeight(),
+            if (loading) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(),
 
-                 verticalArrangement = Arrangement.Center,
-                 horizontalAlignment = Alignment.CenterHorizontally
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
 
-             ){
+                ) {
 
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(30.dp),
+                        color = HeetoxBrightGreen
+                    )
 
-                 Image(painter = painterResource(id = R.drawable.loadingcircle), contentDescription = "",
-                     modifier = Modifier
-                         .padding(20.dp)
-                         .size(30.dp)
-                         .rotate(degree.toFloat()),
-                 )
+                }
+            } else {
 
-             }
-         }else{
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .fillMaxHeight(),
 
-             Column(
-                 modifier = Modifier
-                     .fillMaxWidth()
-                     .fillMaxHeight(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
 
-                 verticalArrangement = Arrangement.Center,
-                 horizontalAlignment = Alignment.CenterHorizontally
-
-             ){
+                ) {
 
 
-                 Text(text = error,
-                     modifier = Modifier .padding(20.dp),
-                     fontSize = 14.sp,
-                     color = HeetoxDarkGray,
-                     )
+                    Text(
+                        text = error,
+                        modifier = Modifier.padding(20.dp),
+                        fontSize = 14.sp,
+                        color = HeetoxDarkGray,
+                    )
 
-             }
+                }
 
 
+            }
 
-         }
+            LaunchedEffect(key1 = Unit) {
+                while (true) {
+                    delay(5)
+                    degree = (degree + 5) % 360
 
-          LaunchedEffect(key1 = Unit) {
-              while(true){
-                  delay(5)
-                  degree = (degree+5) % 360
+                }
+            }
 
-              }
-          }
+        } else {
 
-      }else{
+            LazyRow(
 
-          LazyRow(
-
-              modifier = Modifier
-                  .padding(10.dp,10.dp,0.dp,20.dp)
+                modifier = Modifier
+                    .padding(10.dp, 10.dp, 0.dp, 20.dp)
 //                  .background(HeetoxDarkGray)
 
-          ){
+            ) {
 
-              if(CategoriesList != null){
+                if (categoriesList != null) {
 
-                  items(CategoriesList){
-                          item ->
+                    items(categoriesList) { item ->
 
-                      CategoryItem(item = item,navController,Productviewmodel)
+                        CategoryItem(item = item, navController)
 
-                  }
-              }
+                    }
+                }
 
-          }
-      }
+            }
+        }
 
-
-      }
-
-
-    LaunchedEffect(key1 = CategoriesData.value ){
-
-       when(CategoriesData.value){
-
-           is Resource.Error -> {
-               error = "Sorry Couldn't Load Categories"
-               Loading = false
-           }
-
-           is Resource.Loading -> {
-               error = " Just a second ;) "
-               Loading = true
-           }
-
-           is Resource.Nothing -> {
-               error = ""
-           }
-
-           is Resource.Success -> {
-               Loading = false
-               error = ""
-           }
-       }
 
     }
 
+
+    LaunchedEffect(Unit){
+
+        uiEvents.collect{ event ->
+            when (event) {
+                is UiEvent.Loading -> {
+                    if (event.action == Action.MainCategories) {
+                        loading = true
+                        error = ""
+                    }
+                }
+
+                is UiEvent.Success -> {
+                    if (event.action == Action.MainCategories) {
+                        loading = false
+                        error = ""
+                    }
+                }
+
+                is UiEvent.Error -> {
+                    if (event.action == Action.MainCategories) {
+                        loading = false
+                        error = event.message
+                    }
+                }
+
+                UiEvent.Idle -> Unit
+            }
+
+        }
+
+    }
 
 }
 
 
-
-
-
-
 @Composable
-fun CategoryItem(item : String,navController: NavController,productsViewModel: ProductsViewModel){
+fun CategoryItem(item: String, navController: NavController) {
 
 
     Column(
-modifier = Modifier
-    .padding(horizontal = 5.dp)
+        modifier = Modifier
+            .padding(horizontal = 5.dp)
 //    .width(120.dp)
-    .clip(RoundedCornerShape(30.dp))
-    .background(HeetoxWhite)
-    .clickable {
-
-        navController.navigate("productlist/${item}/HOME")
-        productsViewModel.getSubCategory(item)
-        productsViewModel.clearAlternativeProductList()
-
-    }
-    .padding(horizontal = 20.dp, vertical = 8.dp)
-        ,
+            .clip(RoundedCornerShape(30.dp))
+            .background(HeetoxWhite)
+            .clickable {
+                navController.navigate("productlist/${item}/HOME")
+            }
+            .padding(horizontal = 20.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
 
-    ){
+    ) {
 
-    Text(text = item,
-      modifier = Modifier
-   ,
-    fontSize = 14.sp,
+        Text(
+            text = item,
+            modifier = Modifier,
+            fontSize = 14.sp,
 
 
-    )
+            )
 
     }
 

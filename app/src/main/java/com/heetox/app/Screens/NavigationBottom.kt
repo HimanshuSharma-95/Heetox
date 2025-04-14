@@ -30,8 +30,10 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -54,25 +56,24 @@ import com.heetox.app.Model.General.BottomNavData
 import com.heetox.app.R
 import com.heetox.app.Screens.AuthenticationScreens.ChangePasswordScreen
 import com.heetox.app.Screens.AuthenticationScreens.ConsumedProductScreen
-import com.heetox.app.Screens.AuthenticationScreens.Forgotpasswordscreen
+import com.heetox.app.Screens.AuthenticationScreens.ForgotPasswordScreen
 import com.heetox.app.Screens.AuthenticationScreens.LoginScreen
 import com.heetox.app.Screens.AuthenticationScreens.PrivacyPolicy
-import com.heetox.app.Screens.AuthenticationScreens.ProfileBarwithScreen
+import com.heetox.app.Screens.AuthenticationScreens.ProfileBarWithScreen
 import com.heetox.app.Screens.AuthenticationScreens.RegisterScreen
-import com.heetox.app.Screens.AuthenticationScreens.updateprofilescreen
-import com.heetox.app.Screens.AuthenticationScreens.verifyemailscreen
-import com.heetox.app.Screens.PostsScreen.Postscreen
+import com.heetox.app.Screens.AuthenticationScreens.UpdateProfileScreen
+import com.heetox.app.Screens.AuthenticationScreens.VerifyEmailScreen
+import com.heetox.app.Screens.PostsScreen.PostScreen
 import com.heetox.app.Screens.ProdcutScreens.BetterAlternativesScreen
 import com.heetox.app.Screens.ProdcutScreens.MostScannedScreen
 import com.heetox.app.Screens.ProdcutScreens.ProductDataScreen
 import com.heetox.app.Screens.ProdcutScreens.ProductListScreen
-import com.heetox.app.Screens.ProdcutScreens.Scanscreen
+import com.heetox.app.Screens.ProdcutScreens.ScanScreen
 import com.heetox.app.Screens.ProdcutScreens.SearchProductListScreen
-import com.heetox.app.Screens.ProdcutScreens.Searchscreen
+import com.heetox.app.Screens.ProdcutScreens.SearchScreen
 import com.heetox.app.Utils.rememberImeState
 import com.heetox.app.ViewModel.Authentication.AuthenticationViewModel
 import com.heetox.app.ViewModel.PostVM.PostsViewModel
-import com.heetox.app.ViewModel.ProductsVM.ProductsViewModel
 import com.heetox.app.ui.theme.HeetoxDarkGray
 import com.heetox.app.ui.theme.HeetoxDarkGreen
 import com.heetox.app.ui.theme.HeetoxLightGray
@@ -80,8 +81,7 @@ import com.heetox.app.ui.theme.HeetoxLightGray
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun NavbottomandNavGraph(){
-
+fun NavBottomAndNavGraph(){
 
     val items = listOf(
         BottomNavData(
@@ -99,13 +99,13 @@ fun NavbottomandNavGraph(){
         BottomNavData(
             title = "Scan",
             SelectedIcon = ImageVector.vectorResource(id = R.drawable.barcodebottom),
-            unSelectedIcon =  ImageVector.vectorResource(id = R.drawable.barcodebottom),
+            unSelectedIcon = ImageVector.vectorResource(id = R.drawable.barcodebottom),
             hasNews = false
         ),
         BottomNavData(
             title = "posts",
             SelectedIcon = ImageVector.vectorResource(id = R.drawable.blogfilled),
-            unSelectedIcon =  ImageVector.vectorResource(id = R.drawable.blogunfilled),
+            unSelectedIcon = ImageVector.vectorResource(id = R.drawable.blogunfilled),
             hasNews = false
         ),
         BottomNavData(
@@ -115,7 +115,6 @@ fun NavbottomandNavGraph(){
             hasNews = false
         ),
     )
-
 
 
     val imeState = rememberImeState()
@@ -128,7 +127,7 @@ fun NavbottomandNavGraph(){
 
     val routes = listOf("home", "search", "scan", "posts", "profile")
 
-    selectedOption = when (currentDestination?.route){
+    selectedOption = when (currentDestination?.route) {
         "home" -> 0
         "search" -> 1
         "scan" -> 2
@@ -137,24 +136,23 @@ fun NavbottomandNavGraph(){
         else -> selectedOption
     }
 
-    Scaffold( bottomBar = {
+    Scaffold(bottomBar = {
 
         //if to not show bottom navbar on these screens
         if(currentDestination?.route == "login" ||
             currentDestination?.route == "register" ||
             currentDestination?.route == "updateprofile" ||
             currentDestination?.route == "forgotpassword" ||
-            currentDestination?.route == "changepassword"||
+            currentDestination?.route == "changepassword" ||
             currentDestination?.route == "verifyemail"
-            ){
-
-        }else{
+        ) {
+        } else {
 
             Box(
 
                 modifier = Modifier
 
-            ){
+            ) {
 
 
                 NavigationBar(
@@ -279,12 +277,10 @@ fun NavbottomandNavGraph(){
 
             }
         }
-    } ){
+    }) {
 
 
-        NavGraph(navController,it)
-
-
+        NavGraph(navController, it)
 
 
     }
@@ -292,200 +288,261 @@ fun NavbottomandNavGraph(){
 }
 
 
-
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun NavGraph(navController: NavHostController, paddingValues: PaddingValues){
 
 
-
-    val ProductViewModel : ProductsViewModel = hiltViewModel()
-
-    val AuthenticationViewModel : AuthenticationViewModel = hiltViewModel()
-
-    val PostViewModel : PostsViewModel = hiltViewModel()
+    val authViewModel: AuthenticationViewModel = hiltViewModel()
+    val userData = authViewModel.localData.collectAsState().value
 
 
-
-    Box(modifier = Modifier.padding(paddingValues)){
-
+    Box(modifier = Modifier.padding(paddingValues)) {
 
 
-     NavHost(navController = navController, startDestination = "home",
+        NavHost(navController = navController, startDestination = "home",
 
-         enterTransition = { slideInHorizontally(initialOffsetX = { 1000 }) + fadeIn(animationSpec = tween(700)) },
-         exitTransition = { slideOutHorizontally(targetOffsetX = { -1000 }) + fadeOut(animationSpec = tween(700)) },
-         popEnterTransition = { slideInHorizontally(initialOffsetX = { -1000 }) + fadeIn(animationSpec = tween(700)) },
-         popExitTransition = { slideOutHorizontally(targetOffsetX = { 1000 }) + fadeOut(animationSpec = tween(700)) }
+            enterTransition = {
+                slideInHorizontally(initialOffsetX = { 1000 }) + fadeIn(
+                    animationSpec = tween(700)
+                )
+            },
+            exitTransition = {
+                slideOutHorizontally(targetOffsetX = { -1000 }) + fadeOut(
+                    animationSpec = tween(700)
+                )
+            },
+            popEnterTransition = {
+                slideInHorizontally(initialOffsetX = { -1000 }) + fadeIn(
+                    animationSpec = tween(700)
+                )
+            },
+            popExitTransition = {
+                slideOutHorizontally(targetOffsetX = { 1000 }) + fadeOut(
+                    animationSpec = tween(700)
+                )
+            }
 
         ) {
 
-            composable("home") {
-                Homescreen(navController,ProductViewModel)
 
+            composable("home") {
+                HomeScreen(navController,userData)
             }
 
 
-
-            navigation(startDestination = "search", route = "searchscreen") {
-
+//            navigation(startDestination = "search", route = "searchscreen") {
 
                 composable("search") {
-                    Searchscreen(navController = navController)
-
+                    SearchScreen(navController = navController)
                 }
 
 
-                composable("searchproductlist/{search}",
+                composable(
+                    "searchproductlist/{search}",
                     arguments = listOf(navArgument("search") { type = NavType.StringType })
                 ) { backStackEntry ->
                     val search = backStackEntry.arguments?.getString("search") ?: ""
-                    SearchProductListScreen(search = search, AuthVM = AuthenticationViewModel, ProductVM = ProductViewModel, navController = navController)
+                    SearchProductListScreen(
+                        search = search,
+                        navController = navController,
+                        userData = userData
+                    )
                 }
-            }
 
-
-
-
-
+//            }
 
 
 
             composable("scan") {
-                Scanscreen(navController = navController)
+                ScanScreen(navController = navController)
             }
 
-         composable("consumed") {
-             ConsumedProductScreen(navController = navController,ProductViewModel,AuthenticationViewModel)
-         }
+
+            composable("consumed") {
+                ConsumedProductScreen(
+                    navController = navController,
+                    userData = userData
+                )
+            }
 
 
 
             composable("posts") {
-                Postscreen(PostViewModel,AuthenticationViewModel)
+                    backStackEntry ->
+                val postViewModel = hiltViewModel<PostsViewModel>(
+                    remember(backStackEntry) {
+                        navController.getBackStackEntry("home")
+                    }
+                )
+                PostScreen(postViewModel,userData)
             }
 
-            composable("mostscanned"){
-                MostScannedScreen(ProductViewModel,navController)
+            composable("mostscanned") {
+                MostScannedScreen(navController)
             }
 
 
-         composable("aboutus"){
-             AboutUs()
-         }
+            composable("aboutus") {
+                AboutUs()
+            }
 
 
 
+            composable(
+                "productdetails/{barcode}",
+                arguments = listOf(navArgument("barcode") { type = NavType.StringType })
+
+            ) { backStackEntry ->
+                val barcode = backStackEntry.arguments?.getString("barcode") ?: ""
+                ProductDataScreen(barcode,userData, navController)
+            }
 
 
 
-//             Nested Navigation Graph for Product Details
-//            navigation(startDestination = "productlist/{category}/{subcategory?}", route = "categorylist") {
-
-                composable("productdetails/{barcode}",
-                    arguments = listOf(navArgument("barcode") { type = NavType.StringType })
-
+            navigation(
+                startDestination = "productlist/{category}/{source}",
+                route = "categorylist"
+            ) {
+                composable(
+                    "productlist/{category}/{source}",
+                    arguments = listOf(
+                        navArgument("category") { type = NavType.StringType },
+                        navArgument("source") { type = NavType.StringType }
+                    )
                 ) { backStackEntry ->
-                    val barcode = backStackEntry.arguments?.getString("barcode") ?: ""
-                    ProductDataScreen(barcode, ProductViewModel, AuthenticationViewModel, navController)
+                    val category = backStackEntry.arguments?.getString("category") ?: ""
 
+                    ProductListScreen(
+                        category = category,
+                        navController = navController,
+                        userData = userData
+                    )
                 }
+            }
 
 
 
+            composable("betteralternative/{category}/{subCategory}",
+                arguments = listOf(
+                    navArgument("category") { type = NavType.StringType },
+                    navArgument("subCategory") { type = NavType.StringType }
+                )
+            ){
 
-         // Define the categorylist nested graph
-         navigation(startDestination = "productlist/{category}/{source}", route = "categorylist") {
-             composable(
-                 "productlist/{category}/{source}",
-                 arguments = listOf(
-                     navArgument("category") { type = NavType.StringType },
-                     navArgument("source") { type = NavType.StringType }
-                 )
-             ) { backStackEntry ->
-                 val category = backStackEntry.arguments?.getString("category") ?: ""
-                 val source = backStackEntry.arguments?.getString("source") ?: "HOME" // Default to "HOME"
+                    backStackEntry ->
+                val category = backStackEntry.arguments?.getString("category") ?: ""
+                val subCategory = backStackEntry.arguments?.getString("subCategory") ?: ""
 
-                 ProductListScreen(
-                     category = category,
-                     AuthVM = AuthenticationViewModel,
-                     ProductVM = ProductViewModel,
-                     navController = navController,
-                     source = source
-                 )
-             }
-         }
+                BetterAlternativesScreen(
+                    subCategory = subCategory,
+                    navController = navController,
+                    userData = userData
+                )
 
-
-
-         composable("betteralternative/{category}/{subCategory}",
-             arguments = listOf(
-                 navArgument("category") { type = NavType.StringType },
-                 navArgument("subCategory") { type = NavType.StringType }
-             )
-             ){
-
-                 backStackEntry ->
-             val category = backStackEntry.arguments?.getString("category") ?: ""
-             val subCategory = backStackEntry.arguments?.getString("subCategory") ?: ""
-
-             BetterAlternativesScreen(
-                 category = category,
-                 subCategory = subCategory,
-                 AuthVM = AuthenticationViewModel,
-                 ProductVM = ProductViewModel,
-                 navController = navController,
-             )
-         }
-
-
-
+            }
 
 
             //profile
-            composable("forgotpassword"){
-                Forgotpasswordscreen(navController = navController)
+            composable("forgotpassword") {
+                ForgotPasswordScreen(
+                    navController = navController,
+                    forgotPassword = {
+                        authViewModel.forgotPassword(it)
+                    },
+                    uiEvent = authViewModel.uiEvent
+                )
             }
-
-
-
 
 
             navigation(startDestination = "userprofile", route = "profile"){
 
-                 composable("userprofile"){
-
-                    ProfileBarwithScreen(navController = navController)
-
+                composable("userprofile") {
+                    ProfileBarWithScreen(
+                        navController = navController,
+                        userData = userData,
+                        logoutUser = {
+                            authViewModel.logoutUser(it)
+                        },
+                        uiEvent = authViewModel.uiEvent
+                    )
                 }
 
-                composable("register"){
-                    RegisterScreen(navController)
+                composable("register") {
+                    RegisterScreen(
+                        navController,
+                        loginUser = {
+                            authViewModel.loginUser(it)
+                        },
+                        registerUser = {
+                            authViewModel.registerUser(it)
+                        },
+                        uiEvent = authViewModel.uiEvent,
+                    )
                 }
 
-                composable("login"){
-                    LoginScreen(navController)
+                composable("login") {
+                    LoginScreen(
+                        navController,
+                        uiEvent = authViewModel.uiEvent,
+                        loginUser = {
+                            authViewModel.loginUser(it)
+                        },
+                    )
                 }
 
-                composable("updateprofile"){
-                  updateprofilescreen(navController)
-                }
-                composable("verifyemail"){
-                   verifyemailscreen(navController = navController)
-                }
-                composable("changepassword"){
-                   ChangePasswordScreen(navContorller = navController)
+                composable("updateprofile") {
+                    UpdateProfileScreen(
+                        navController,
+                        updateProfileImage = {
+                            authViewModel.updateProfileImage(it)
+                        },
+                        removeProfileImage = {
+                            authViewModel.removeProfileImage(it)
+                        },
+                        userData = userData,
+                        updateProfile = {token,data ->
+                            authViewModel.updateUser(token,data)
+                        },
+                        uiEvent = authViewModel.uiEvent,
+                    )
                 }
 
-                composable("privacypolicy"){
+
+                composable("verifyemail") {
+                    VerifyEmailScreen(
+                        navController = navController,
+                        userData = userData,
+                        uiEvent = authViewModel.uiEvent,
+                        sendOtp = {
+                            authViewModel.sendOtp(it)
+                        },
+                        verifyOtp = { token,data ->
+                            authViewModel.verifyOtp(token,data)
+                        },
+                    )
+                }
+
+
+                composable("changepassword") {
+                    ChangePasswordScreen(
+                        navController = navController,
+                        userData = userData,
+                        changePassword = {
+                            token,data ->
+                            authViewModel.changePassword(token,data)
+                        },
+                        uiEvent = authViewModel.uiEvent,
+                    )
+                }
+
+                composable("privacypolicy") {
                     PrivacyPolicy()
                 }
 
             }
-
         }
     }
-
 
 }
 

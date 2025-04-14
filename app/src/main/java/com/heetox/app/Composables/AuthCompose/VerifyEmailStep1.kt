@@ -27,7 +27,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.heetox.app.Model.Authentication.SendOtpSend
-import com.heetox.app.ViewModel.Authentication.AuthenticationViewModel
 import com.heetox.app.ui.theme.HeetoxDarkGray
 import com.heetox.app.ui.theme.HeetoxDarkGreen
 import com.heetox.app.ui.theme.HeetoxGreen
@@ -36,7 +35,7 @@ import com.heetox.app.ui.theme.HeetoxWhite
 
 
 @Composable
-fun VerifyemailStep1(viewmodel: AuthenticationViewModel,email : String, navController: NavHostController){
+fun VerifyEmailStep1(sendOtp:(SendOtpSend)->Unit, email : String, navController: NavHostController){
 
     val scrollState = rememberScrollState()
 
@@ -175,7 +174,7 @@ fun VerifyemailStep1(viewmodel: AuthenticationViewModel,email : String, navContr
                            onClick = {
 
 
-                               viewmodel.sendotp(
+                               sendOtp(
                                    SendOtpSend(email)
                                )
 
