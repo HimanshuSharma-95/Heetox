@@ -32,19 +32,12 @@ class PostRepository @Inject constructor(
 
         try {
             val response = apiService.likeDislikePost(postId, authorization)
-
-            if (response.isSuccessful && response.body() != null) {
-
-                return Resource.Success(response.body()!!.data)
-
+            return if (response.isSuccessful && response.body() != null) {
+                Resource.Success(response.body()!!.data)
             } else {
-
-                return Resource.Error("Something went wrong")
-
+                Resource.Error("Something went wrong")
             }
-
         }catch (e:Exception){
-            
             return Resource.Error("Something went wrong")
 //            Log.d("post repo", "postLikeDislike: $e")
             
@@ -58,7 +51,6 @@ class PostRepository @Inject constructor(
 
         try {
             val response = apiService.bookmarkPost(postId, authorization)
-
             return if (response.isSuccessful && response.body() != null){
                 Resource.Success(response.body()!!.data)
             } else {

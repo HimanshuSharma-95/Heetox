@@ -12,7 +12,6 @@ import com.heetox.app.Model.Authentication.LoginData
 import com.heetox.app.Model.Authentication.LoginSend
 import com.heetox.app.Model.Authentication.RegisterSend
 import com.heetox.app.Model.Authentication.SendOtpSend
-import com.heetox.app.Model.Authentication.UpdateProfileFunctionSend
 import com.heetox.app.Model.Authentication.UpdateProfileSend
 import com.heetox.app.Model.Authentication.UpdateProfleResponse
 import com.heetox.app.Model.Authentication.UpdateUserProfileImageSend
@@ -40,21 +39,15 @@ class AuthenticationRepository @Inject constructor(
             val response = authApi.registerUser(userData)
 
             return if (response.body() != null && response.body()!!.success) {
-
                 Resource.Success(response.body()?.data)
-
             } else {
-
                 Resource.Error(extractErrorMessage(response))
-
             }
         } catch (e: Exception) {
-
 
             if (e is CancellationException) {
                 throw e
             }
-
             return Resource.Error("Couldn't Register Try again")
 //            Log.d("auth repo ->", "Registeruser: $e")
         }
@@ -65,25 +58,17 @@ class AuthenticationRepository @Inject constructor(
 
         try {
             val response = authApi.loginUser(userData)
-
             if (response.body() != null && response.body()!!.success) {
-
                 response.body()?.data?.let { getCurrentUser(it.accesstoken) }
-
                 return Resource.Success(response.body()?.data)
-
             } else {
-
                 return Resource.Error(extractErrorMessage(response))
-
             }
         } catch (e: Exception) {
-
             return Resource.Error("Couldn't Register Try again")
 //            Log.d("auth repo ->", "Loginuser: $e")
 
         }
-
     }
 
 
@@ -92,20 +77,13 @@ class AuthenticationRepository @Inject constructor(
         try {
 
             val response = authApi.getCurrentUser(token)
-
             return if (response.body() != null && response.body()!!.success) {
-
                 Resource.Success(response.body()?.data)
-
             } else {
-
                 Resource.Error(extractErrorMessage(response))
-
             }
         } catch (e: Exception) {
-
             return Resource.Error("Couldn't get Current User Try again")
-
 //            Log.d("auth repo ->", "GetCurentUser: $e")
         }
 
@@ -115,26 +93,16 @@ class AuthenticationRepository @Inject constructor(
     suspend fun logoutUser(token: String): Resource<ApiResponse<Nothing>> {
 
         try {
-
             val response = authApi.logoutuser(token)
-
             return if (response.body()!!.success && response.body() != null) {
-
                 Resource.Success(response.body())
-
             } else {
-
                 Resource.Error(extractErrorMessage(response))
-
             }
-
         } catch (e: Exception) {
-
             return Resource.Error("Couldn't Logout Try again")
 //            Log.d("auht repo ->", "logoutUser: $e")
-
         }
-
 
     }
 
@@ -220,21 +188,15 @@ class AuthenticationRepository @Inject constructor(
             val response = authApi.uploadProfileImage(data.token, body)
 
             if (response.body() != null && response.body()!!.success) {
-
                 return Resource.Success(response.body()!!.data)
-
-
             } else {
                 return Resource.Error(extractErrorMessage(response))
             }
 
         } catch (e: Exception) {
-
             return Resource.Error("couldn't Upload Image Try Again")
 //            Log.d("Auth repo", "UploadProfileImage: $e")
-
         }
-
     }
 
 
@@ -242,18 +204,12 @@ class AuthenticationRepository @Inject constructor(
 
         try {
             val response = authApi.removeProfileImage(token)
-
             return if (response.body() != null && response.body()!!.success) {
-
                 Resource.Success(response.body()?.data)
-
             } else {
-
                 Resource.Error(extractErrorMessage(response))
-
             }
         } catch (e: Exception) {
-
             return Resource.Error("Couldn't Remove Image Try Again")
 //            Log.d("Auth repo", "RemoveProfileImage: $e")
 
@@ -265,20 +221,12 @@ class AuthenticationRepository @Inject constructor(
 
         try {
             val response = authApi.sendOtp(email)
-
-
             return if (response.body() != null && response.body()!!.success) {
-
                 Resource.Success(response.body()!!.data)
-
             } else {
-
                 Resource.Error(extractErrorMessage(response))
-
             }
-
         } catch (e: Exception) {
-
             return Resource.Error("Couldn't Send Otp Try Again")
 //            Log.d("auth repo ", "SendOtp: $e")
         }
@@ -290,19 +238,12 @@ class AuthenticationRepository @Inject constructor(
 
         try {
             val response = authApi.verifyOtp(token, data)
-
             return if (response.body() != null && response.body()!!.success) {
-
                 Resource.Success(response.body()!!.data)
-
             } else {
-
                 Resource.Error(extractErrorMessage(response))
-
             }
-
         } catch (e: Exception) {
-
 //            Log.d("auth repo", "VerifyOtp: $e")
             return Resource.Error("Couldn't Verify Otp Try Again")
 
@@ -314,19 +255,12 @@ class AuthenticationRepository @Inject constructor(
     suspend fun changePassword(token: String, data: ChangePasswordSend): Resource<String> {
 
         try {
-
             val response = authApi.changePassword(token, data)
-
             return if (response.body() != null && response.body()!!.success) {
-
                 Resource.Success(response.body()!!.data)
-
             } else {
-
                 Resource.Error(extractErrorMessage(response))
-
             }
-
 
         } catch (e: Exception) {
 
@@ -343,18 +277,12 @@ class AuthenticationRepository @Inject constructor(
 
         try {
             val response = authApi.forgotPassword(SendOtpSend(email))
-
             return if (response.body() != null && response.body()!!.success) {
-
                 Resource.Success(response.body()!!.data)
-
             } else {
-
                 Resource.Error(extractErrorMessage(response))
             }
-
         } catch (e: Exception) {
-
             return Resource.Error("Couldn't send Try Again")
 //            Log.d("Auth repo", "forgetPassword: $e")
 
