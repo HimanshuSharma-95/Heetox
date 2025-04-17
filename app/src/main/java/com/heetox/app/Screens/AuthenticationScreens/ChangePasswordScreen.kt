@@ -75,9 +75,7 @@ fun ChangePasswordScreen(navController : NavHostController,
         mutableStateOf(false)
     }
 
-    val token by rememberSaveable {
-        mutableStateOf(userData!!.Token)
-    }
+    val token = userData?.Token.orEmpty()
 
 
 if(loading){

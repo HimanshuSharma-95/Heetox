@@ -1,11 +1,11 @@
 package com.heetox.app.Screens.ProdcutScreens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -16,22 +16,19 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import com.heetox.app.Composables.ProductCompose.ProductByBarcodeDetails
 import com.heetox.app.Model.Authentication.LocalStoredData
-import com.heetox.app.R
 import com.heetox.app.Utils.Action
 import com.heetox.app.Utils.UiEvent
 import com.heetox.app.ViewModel.ProductsVM.ConsumeViewModel
 import com.heetox.app.ViewModel.ProductsVM.ProductsViewModel
+import com.heetox.app.ui.theme.HeetoxBrightGreen
 import com.heetox.app.ui.theme.HeetoxDarkGray
 import com.heetox.app.ui.theme.HeetoxWhite
-import kotlinx.coroutines.delay
 
 
 @Composable
@@ -45,9 +42,8 @@ fun ProductDataScreen(barcode : String,userData:LocalStoredData?, navController:
     val consumeVM : ConsumeViewModel = hiltViewModel()
     val consumeProductData = consumeVM.consumeProductData.collectAsState().value
 
-    val token by rememberSaveable {
-        mutableStateOf(userData?.Token)
-    }
+    val token = userData?.Token
+    val receivedBarcode = barcode
 
     var error by rememberSaveable {
         mutableStateOf("")
@@ -57,17 +53,12 @@ fun ProductDataScreen(barcode : String,userData:LocalStoredData?, navController:
         mutableStateOf(true)
     }
 
-    val receivedBarcode by rememberSaveable {
-        mutableStateOf(barcode)
-    }
 
-
-    var isApiCalled by rememberSaveable { mutableStateOf(false) }
+//    var isApiCalled by rememberSaveable { mutableStateOf(false) }
 
 
     if(loading || error.isNotEmpty()){
 
-        var degree by rememberSaveable { mutableStateOf(0) }
 
         Column(
             modifier = Modifier
@@ -81,10 +72,9 @@ fun ProductDataScreen(barcode : String,userData:LocalStoredData?, navController:
 
 
             if (loading){
-                Image(painter = painterResource(id = R.drawable.loadingcircle), contentDescription = "",
-                    modifier = Modifier
-                        .size(40.dp)
-                        .rotate(degree.toFloat()),
+                CircularProgressIndicator(
+                    modifier = Modifier.size(30.dp),
+                    color = HeetoxBrightGreen
                 )
             }else{
 
@@ -93,14 +83,6 @@ fun ProductDataScreen(barcode : String,userData:LocalStoredData?, navController:
                     color = HeetoxDarkGray,
                 )
 
-            }
-
-            LaunchedEffect(key1 = Unit) {
-                while(true){
-                    delay(5)
-                    degree = (degree+5) % 360
-
-                }
             }
 
 
@@ -131,13 +113,8 @@ fun ProductDataScreen(barcode : String,userData:LocalStoredData?, navController:
 
     LaunchedEffect(key1 = receivedBarcode) {
 
-          if(token != null){
-              productVM.getProductByBarcode(barcode, token!!)
-          }else{
-              productVM.getProductByBarcode(barcode, "")
-          }
+              productVM.getProductByBarcode(barcode, token?: "")
 
-            isApiCalled = true
 
     }
 

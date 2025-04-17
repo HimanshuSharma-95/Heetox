@@ -1,16 +1,12 @@
 package com.heetox.app.ViewModel.Authentication
 
 import androidx.lifecycle.viewModelScope
-import com.heetox.app.Model.ApiResponse
-import com.heetox.app.Model.Authentication.AuthUser
 import com.heetox.app.Model.Authentication.ChangePasswordSend
 import com.heetox.app.Model.Authentication.LocalStoredData
-import com.heetox.app.Model.Authentication.LoginData
 import com.heetox.app.Model.Authentication.LoginSend
 import com.heetox.app.Model.Authentication.RegisterSend
 import com.heetox.app.Model.Authentication.SendOtpSend
 import com.heetox.app.Model.Authentication.UpdateProfileSend
-import com.heetox.app.Model.Authentication.UpdateProfleResponse
 import com.heetox.app.Model.Authentication.UpdateUserProfileImageSend
 import com.heetox.app.Model.Authentication.VerifyEmailSend
 import com.heetox.app.Repository.AuthenticationRepository.AuthenticationRepository
@@ -34,53 +30,9 @@ class AuthenticationViewModel @Inject constructor(
 ) : UiEventViewModel() {
 
 
-    private val _registerUserData = MutableStateFlow<Resource<AuthUser>>(Resource.Nothing())
-    val registerUserData = _registerUserData.asStateFlow()
-
-
-    private val _loginUserData = MutableStateFlow<Resource<LoginData>>(Resource.Nothing())
-    val loginUserData = _loginUserData.asStateFlow()
-
-
-    private val _getCurrentUserData = MutableStateFlow<Resource<AuthUser>>(Resource.Nothing())
-    val getCurrentUserData = _getCurrentUserData.asStateFlow()
-
 
     private val _localData = MutableStateFlow<LocalStoredData?>(null)
     val localData = _localData.asStateFlow()
-
-
-    private val _logoutUser = MutableStateFlow<Resource<ApiResponse<Nothing>>>(Resource.Nothing())
-    val logoutUser = _logoutUser.asStateFlow()
-
-
-    private val _updateUserData =
-        MutableStateFlow<Resource<UpdateProfleResponse>>(Resource.Nothing())
-    val updateUserData = _updateUserData.asStateFlow()
-
-
-    private val _uploadProfileImageData = MutableStateFlow<Resource<AuthUser>>(Resource.Nothing())
-    val uploadProfileImageData = _uploadProfileImageData.asStateFlow()
-
-
-    private val _removeProfileImage = MutableStateFlow<Resource<AuthUser>>(Resource.Nothing())
-    val removeProfileImage = _removeProfileImage.asStateFlow()
-
-
-    private val _sendOtpData = MutableStateFlow<Resource<String>>(Resource.Nothing())
-    val sendOtpData = _sendOtpData.asStateFlow()
-
-
-    private val _verifyOtpData = MutableStateFlow<Resource<AuthUser>>(Resource.Nothing())
-    val verifyOtpData = _verifyOtpData.asStateFlow()
-
-
-    private val _changePasswordData = MutableStateFlow<Resource<String>>(Resource.Nothing())
-    val changePasswordData = _changePasswordData.asStateFlow()
-
-
-    private val _forgotPasswordData = MutableStateFlow<Resource<String>>(Resource.Nothing())
-    val forgotPasswordData = _forgotPasswordData.asStateFlow()
 
 
     init {
@@ -106,11 +58,7 @@ class AuthenticationViewModel @Inject constructor(
 
             emitUiEvent(UiEvent.Loading(Action.Register))
 
-            val response = authRepo.registerUser(userData)
-
-            _registerUserData.value = response
-
-            when (response) {
+            when (val response = authRepo.registerUser(userData)) {
                 is Resource.Success -> {
                     emitUiEvent(UiEvent.Success(Action.Register))
                 }
@@ -124,7 +72,7 @@ class AuthenticationViewModel @Inject constructor(
                     )
                 }
 
-                else -> {}
+                else -> Unit
             }
         }
 
@@ -136,11 +84,7 @@ class AuthenticationViewModel @Inject constructor(
 
             emitUiEvent(UiEvent.Loading(Action.Login))
 
-            val response = authRepo.loginUser(userData)
-
-            _loginUserData.value = response
-
-            when (response) {
+            when (val response = authRepo.loginUser(userData)) {
                 is Resource.Success -> {
                     response.data?.let {
                         _localData.value = tokenRepo.saveToken(
@@ -176,11 +120,7 @@ class AuthenticationViewModel @Inject constructor(
     private fun getCurrentUser(token: String) {
         viewModelScope.launch(Dispatchers.IO) {
 
-            _getCurrentUserData.value = Resource.Loading()
-
             val response = authRepo.getCurrentUser(token)
-
-            _getCurrentUserData.value = response
 
             if (response.data == null && tokenRepo.getToken() == null) {
                 tokenRepo.removeToken()
@@ -195,16 +135,16 @@ class AuthenticationViewModel @Inject constructor(
 
             emitUiEvent(UiEvent.Loading(Action.Logout))
 
-            val response = authRepo.logoutUser(token)
-            _logoutUser.value = response
-
-            if (response is Resource.Success) {
-                _localData.value = null
-                tokenRepo.removeToken()
-                emitUiEvent(UiEvent.Success(Action.Logout))
-
-            } else if (response is Resource.Error) {
-                emitUiEvent(UiEvent.Error(response.error ?: "Logout failed", Action.Logout))
+            when(val response = authRepo.logoutUser(token)){
+                is Resource.Error ->{
+                    emitUiEvent(UiEvent.Error(response.error ?: "Logout failed", Action.Logout))
+                }
+                is Resource.Success -> {
+                    _localData.value = null
+                    tokenRepo.removeToken()
+                    emitUiEvent(UiEvent.Success(Action.Logout))
+                }
+                else -> Unit
             }
 
         }
@@ -215,69 +155,69 @@ class AuthenticationViewModel @Inject constructor(
 
             emitUiEvent(UiEvent.Loading(Action.UpdateUserData))
 
-            val response = authRepo.updateProfile(token, userdata)
-            _updateUserData.value = response
-
-            if (response is Resource.Success) {
-                val updatedUserData = response.data
-                val currentLocalData = tokenRepo.getToken()
-
-                if (updatedUserData != null && currentLocalData != null) {
-                    _localData.value = currentLocalData.copy(
-                        Name = updatedUserData.fullname,
-                        Email = updatedUserData.email,
-                        Dob = updatedUserData.DOB,
-                        gender = updatedUserData.gender,
-                        Phone = updatedUserData.phone_number
+            when(val response = authRepo.updateProfile(token, userdata)){
+                is Resource.Error -> {
+                    emitUiEvent(
+                        UiEvent.Error(
+                            response.error ?: "Couldn't Update User",
+                            Action.UpdateUserData
+                        )
                     )
-                    tokenRepo.saveToken(_localData.value!!)
                 }
+                is Resource.Success -> {
+                    val updatedUserData = response.data
+                    val currentLocalData = tokenRepo.getToken()
 
-                emitUiEvent(UiEvent.Success(Action.UpdateUserData))
+                    if (updatedUserData != null && currentLocalData != null) {
+                        _localData.value = currentLocalData.copy(
+                            Name = updatedUserData.fullname,
+                            Email = updatedUserData.email,
+                            Dob = updatedUserData.DOB,
+                            gender = updatedUserData.gender,
+                            Phone = updatedUserData.phone_number
+                        )
+                        tokenRepo.saveToken(_localData.value!!)
+                    }
 
-            } else if (response is Resource.Error) {
-                emitUiEvent(
-                    UiEvent.Error(
-                        response.error ?: "Couldn't Update User",
-                        Action.UpdateUserData
-                    )
-                )
+                    emitUiEvent(UiEvent.Success(Action.UpdateUserData))
+
+                }
+                else -> Unit
             }
         }
     }
 
-
-
     fun updateProfileImage(data:UpdateUserProfileImageSend) {
         viewModelScope.launch(Dispatchers.IO) {
 
-
             emitUiEvent(UiEvent.Loading(Action.UpdateUserImage))
 
-            val response = authRepo.uploadProfileImage(data)
-            _uploadProfileImageData.value = response
-
-            if (response is Resource.Success) {
-                val updatedData = response.data
-                val currentLocalData = tokenRepo.getToken()
-
-                if (updatedData != null && currentLocalData != null) {
-                    _localData.value = currentLocalData.copy(
-                        avatar = updatedData.avatar
+            when(val response = authRepo.uploadProfileImage(data)){
+                is Resource.Error -> {
+                    emitUiEvent(
+                        UiEvent.Error(
+                            response.error ?: "Failed to upload image",
+                            Action.UpdateUserImage
+                        )
                     )
-                    _localData.value?.let { tokenRepo.saveToken(it) }
                 }
+                is Resource.Success -> {
+                    val updatedData = response.data
+                    val currentLocalData = tokenRepo.getToken()
 
-                emitUiEvent(UiEvent.Success(Action.UpdateUserImage))
+                    if (updatedData != null && currentLocalData != null) {
+                        _localData.value = currentLocalData.copy(
+                            avatar = updatedData.avatar
+                        )
+                        _localData.value?.let { tokenRepo.saveToken(it) }
+                    }
 
-            } else if (response is Resource.Error) {
-                emitUiEvent(
-                    UiEvent.Error(
-                        response.error ?: "Failed to upload image",
-                        Action.UpdateUserImage
-                    )
-                )
+                    emitUiEvent(UiEvent.Success(Action.UpdateUserImage))
+
+                }
+                else -> Unit
             }
+
         }
     }
 
@@ -287,27 +227,29 @@ class AuthenticationViewModel @Inject constructor(
 
             emitUiEvent(UiEvent.Loading(Action.RemoveUserProfile))
 
-            val response = authRepo.removeProfileImage(token)
-            _removeProfileImage.value = response
-
-            if (response is Resource.Success) {
-                val localData = tokenRepo.getToken()
-
-                if (localData != null) {
-                    _localData.value = localData.copy(avatar = "")
-                    _localData.value?.let { tokenRepo.saveToken(it) }
-                }
-
-                emitUiEvent(UiEvent.Success(Action.RemoveUserProfile))
-
-            } else if (response is Resource.Error) {
-                emitUiEvent(
-                    UiEvent.Error(
-                        response.error ?: "Failed to remove profile image",
-                        Action.RemoveUserProfile
+            when(val response = authRepo.removeProfileImage(token)){
+                is Resource.Error -> {
+                    emitUiEvent(
+                        UiEvent.Error(
+                            response.error ?: "Failed to remove profile image",
+                            Action.RemoveUserProfile
+                        )
                     )
-                )
+                }
+                is Resource.Success -> {
+                    val localData = tokenRepo.getToken()
+
+                    if (localData != null) {
+                        _localData.value = localData.copy(avatar = "")
+                        _localData.value?.let { tokenRepo.saveToken(it) }
+                    }
+
+                    emitUiEvent(UiEvent.Success(Action.RemoveUserProfile))
+
+                }
+                else -> Unit
             }
+
         }
     }
 
@@ -316,13 +258,16 @@ class AuthenticationViewModel @Inject constructor(
 
             emitUiEvent(UiEvent.Loading(Action.SendOTP))
 
-            val response = authRepo.sendOtp(email)
-
-            if (response is Resource.Success) {
-                emitUiEvent(UiEvent.Success(Action.SendOTP))
-            } else if (response is Resource.Error) {
-                emitUiEvent(UiEvent.Error(response.error ?: "Failed to send OTP", Action.SendOTP))
+            when(val response = authRepo.sendOtp(email)){
+                is Resource.Error -> {
+                    emitUiEvent(UiEvent.Error(response.error ?: "Failed to send OTP", Action.SendOTP))
+                }
+                is Resource.Success -> {
+                    emitUiEvent(UiEvent.Success(Action.SendOTP))
+                }
+                else -> Unit
             }
+
         }
     }
 
@@ -331,23 +276,26 @@ class AuthenticationViewModel @Inject constructor(
 
             emitUiEvent(UiEvent.Loading(Action.VerifyOTP))
 
-            val response = authRepo.verifyOtp(token, data)
-
-            if (response is Resource.Success) {
-                val localData = tokenRepo.getToken()
-                if (localData != null) {
-                    _localData.value = localData.copy(EmailStatus = true)
-                    _localData.value?.let { tokenRepo.saveToken(it) }
-                }
-                emitUiEvent(UiEvent.Success(Action.VerifyOTP))
-            } else if (response is Resource.Error) {
-                emitUiEvent(
-                    UiEvent.Error(
-                        response.error ?: "Failed to verify OTP",
-                        Action.VerifyOTP
+            when(val response = authRepo.verifyOtp(token, data)){
+                is Resource.Error -> {
+                    emitUiEvent(
+                        UiEvent.Error(
+                            response.error ?: "Failed to verify OTP",
+                            Action.VerifyOTP
+                        )
                     )
-                )
+                }
+                is Resource.Success -> {
+                    val localData = tokenRepo.getToken()
+                    if (localData != null) {
+                        _localData.value = localData.copy(EmailStatus = true)
+                        _localData.value?.let { tokenRepo.saveToken(it) }
+                    }
+                    emitUiEvent(UiEvent.Success(Action.VerifyOTP))
+                }
+                else -> Unit
             }
+
         }
     }
 
@@ -356,9 +304,7 @@ class AuthenticationViewModel @Inject constructor(
 
             emitUiEvent(UiEvent.Loading(Action.ChangePassword))
 
-            val response = authRepo.changePassword(token, data)
-
-            when (response) {
+            when (val response = authRepo.changePassword(token, data)) {
                 is Resource.Success -> {
                     emitUiEvent(UiEvent.Success(Action.ChangePassword))
                 }
@@ -382,11 +328,7 @@ class AuthenticationViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             emitUiEvent(UiEvent.Loading(Action.ForgotPassword))
 
-            val response = authRepo.forgetPassword(email)
-
-            _forgotPasswordData.value = response
-
-            when (response) {
+            when (val response = authRepo.forgetPassword(email)) {
                 is Resource.Success -> {
                     emitUiEvent(UiEvent.Success(Action.ForgotPassword))
                 }

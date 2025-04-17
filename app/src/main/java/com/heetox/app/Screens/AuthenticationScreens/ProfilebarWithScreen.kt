@@ -20,7 +20,6 @@ import androidx.compose.material.icons.filled.Login
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.MarkEmailRead
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.filled.ModeEdit
 import androidx.compose.material.icons.filled.PrivacyTip
 import androidx.compose.material.icons.filled.SupervisorAccount
 import androidx.compose.material.icons.outlined.Edit
@@ -28,7 +27,6 @@ import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Login
 import androidx.compose.material.icons.outlined.Logout
 import androidx.compose.material.icons.outlined.MarkEmailRead
-import androidx.compose.material.icons.outlined.ModeEdit
 import androidx.compose.material.icons.outlined.PrivacyTip
 import androidx.compose.material.icons.outlined.SupervisorAccount
 import androidx.compose.material3.DrawerValue
@@ -49,7 +47,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -80,126 +78,65 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileBarWithScreen(navController: NavHostController,
-                         userData:LocalStoredData?,
-                         logoutUser:(String) -> Unit,
-                         uiEvent : Flow<UiEvent>
-                         ){
-
+fun ProfileBarWithScreen(
+    navController: NavHostController,
+    userData: LocalStoredData?,
+    logoutUser: (String) -> Unit,
+    uiEvent: Flow<UiEvent>
+) {
 
 
     val context = LocalContext.current
-    val loginItems : List<NavDrawer>
 
-    val productVM : ProductsViewModel = hiltViewModel()
+    val productVM: ProductsViewModel = hiltViewModel()
     val likedProductsData = productVM.likedProductsData.collectAsState().value
     val token = userData?.Token ?: ""
 
-    if(userData != null){
 
-        if(userData.EmailStatus){
-
-            loginItems = listOf(
-                NavDrawer(
-                    title = "Update Profile",
-                    SelectedIcon = Icons.Filled.Edit,
-                    UnselectedIcon = Icons.Outlined.Edit,
-                    route = "updateprofile"
-                ),
-                NavDrawer(
-                    title = "Change Password",
-                    SelectedIcon = Icons.Filled.Lock,
-                    UnselectedIcon = Icons.Outlined.Lock,
-                    route = "changepassword"
-                ),
-                NavDrawer(
-                    title = "Privacy Policy",
-                    SelectedIcon = Icons.Filled.PrivacyTip,
-                    UnselectedIcon = Icons.Outlined.PrivacyTip,
-                    route = "privacypolicy"
-                ),
-                NavDrawer(
-                    title = "Logout",
-                    SelectedIcon = Icons.Filled.Logout,
-                    UnselectedIcon = Icons.Outlined.Logout,
-                    route = "logout"
-                )
-
-            )
-        }else{
-
-            loginItems = listOf(
-                NavDrawer(
-                    title = "Update Profile",
-                    SelectedIcon = Icons.Filled.Edit,
-                    UnselectedIcon = Icons.Outlined.Edit,
-                    route = "updateprofile"
-                ),
-                NavDrawer(
-                    title = "Change Password",
-                    SelectedIcon = Icons.Filled.Lock,
-                    UnselectedIcon = Icons.Outlined.Lock,
-                    route = "changepassword"
-                ),
-                NavDrawer(
-                    title = "Verify Email",
-                    SelectedIcon = Icons.Filled.MarkEmailRead,
-                    UnselectedIcon = Icons.Outlined.MarkEmailRead,
-                    route = "verifyemail"
-                ),
-                NavDrawer(
-                    title = "Privacy Policy",
-                    SelectedIcon = Icons.Filled.PrivacyTip,
-                    UnselectedIcon = Icons.Outlined.PrivacyTip,
-                    route = "privacypolicy"
-                ),
-                NavDrawer(
-                    title = "Logout",
-                    SelectedIcon = Icons.Filled.Logout,
-                    UnselectedIcon = Icons.Outlined.Logout,
-                    route = "logout"
-                )
-
-
-            )
-
-        }
-
-    }else{
-
-        loginItems = listOf(
-            NavDrawer(
-                title = "Update Profile",
-                SelectedIcon = Icons.Filled.ModeEdit,
-                UnselectedIcon = Icons.Outlined.ModeEdit,
-                route = "updateprofile"
-            ),
-            NavDrawer(
-                title = "Change Password",
-                SelectedIcon = Icons.Filled.Lock,
-                UnselectedIcon = Icons.Outlined.Lock,
-                route = "changepassword"
-            ),
-            NavDrawer(
-                title = "Privacy Policy",
-                SelectedIcon = Icons.Filled.PrivacyTip,
-                UnselectedIcon = Icons.Outlined.PrivacyTip,
-                route = "privacypolicy"
-            ),
-            NavDrawer(
-                title = "Logout",
-                SelectedIcon = Icons.Filled.Logout,
-                UnselectedIcon = Icons.Outlined.Logout,
-                route = "logout"
-            )
-
+    // Common login items
+    val commonLoginItems = listOf(
+        NavDrawer(
+            title = "Update Profile",
+            SelectedIcon = Icons.Filled.Edit,
+            UnselectedIcon = Icons.Outlined.Edit,
+            route = "updateprofile"
+        ),
+        NavDrawer(
+            title = "Change Password",
+            SelectedIcon = Icons.Filled.Lock,
+            UnselectedIcon = Icons.Outlined.Lock,
+            route = "changepassword"
+        ),
+        NavDrawer(
+            title = "Privacy Policy",
+            SelectedIcon = Icons.Filled.PrivacyTip,
+            UnselectedIcon = Icons.Outlined.PrivacyTip,
+            route = "privacypolicy"
+        ),
+        NavDrawer(
+            title = "Logout",
+            SelectedIcon = Icons.Filled.Logout,
+            UnselectedIcon = Icons.Outlined.Logout,
+            route = "logout"
         )
+    )
 
+    val loginItems: List<NavDrawer> = when {
+        userData == null || userData.EmailStatus -> commonLoginItems
+        else -> {
+            val verifyEmailItem = NavDrawer(
+                title = "Verify Email",
+                SelectedIcon = Icons.Filled.MarkEmailRead,
+                UnselectedIcon = Icons.Outlined.MarkEmailRead,
+                route = "verifyemail"
+            )
+            // Insert verifyEmail after "Change Password" for logical grouping
+            commonLoginItems.toMutableList().apply { add(2, verifyEmailItem) }
+        }
     }
 
 
-
-    val logoutitems = listOf(
+    val logoutItems = listOf(
 
         NavDrawer(
             title = "Register",
@@ -233,212 +170,212 @@ fun ProfileBarWithScreen(navController: NavHostController,
         val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
         val scope = rememberCoroutineScope()
         var selectedIndex by rememberSaveable {
-            mutableStateOf(0)
+            mutableIntStateOf(0)
         }
 
         ModalNavigationDrawer(
             drawerContent = {
 
-ModalDrawerSheet(
+                ModalDrawerSheet(
 
-    modifier = Modifier
-        .clip(RoundedCornerShape(0.dp))
-
-
-){
-
-   Column(
-
-       modifier = Modifier
-           .fillMaxHeight()
-           .width(300.dp)
-           .background(Color.White)
-           .padding(30.dp)
-
-       ,
-       horizontalAlignment = Alignment.CenterHorizontally
-
-   ){
-
-       if(userData == null){
-
-           logoutitems.forEachIndexed { index, item ->
-
-               NavigationDrawerItem(
-                   modifier = Modifier
-                       .padding(vertical = 10.dp)
-
-                   ,label = {
-                       Text(text = item.title)
-                   },
-                   selected = index == selectedIndex ,
-
-                   onClick = {
-                       selectedIndex = index
-
-                       navController.navigate(item.route.toString())
-
-                       scope.launch {
-                           drawerState.close()
-                       }
-
-                   },
-                   icon = {
-                       Icon(
-                           if(index == selectedIndex){
-                               item.SelectedIcon
-                           }else{
-                               item.UnselectedIcon
-                           },
-                           contentDescription = item.title
-                       )
-                   },
-                   colors = NavigationDrawerItemDefaults.colors(
-                       selectedContainerColor = Color.Transparent,
-                       unselectedContainerColor = Color.Transparent,
-                       selectedTextColor = HeetoxDarkGray,
-                       unselectedTextColor = HeetoxDarkGray,
-                       selectedIconColor = HeetoxDarkGray,
-                       unselectedIconColor = HeetoxDarkGray
-                   )
-
-               )
-
-               Box(modifier = Modifier
-                   .height(2.dp)
-                   .fillMaxWidth(.9f)
-                   .background(HeetoxLightGray)
-
-               )
-
-           }
-
-       }else{
-           loginItems.forEachIndexed { index, item ->
-
-               NavigationDrawerItem(
-                   modifier = Modifier
-                       .padding(vertical = 10.dp)
-
-                   ,label = {
-                       Text(text = item.title)
-                   },
-                   selected = index == selectedIndex ,
-
-                   onClick = {
-                       selectedIndex = index
-
-                       if(item.route == "logout"){
-
-                           logoutUser(token)
-
-                       }else{
-                           navController.navigate(item.route.toString())
-                       }
-
-                       scope.launch {
-                           drawerState.close()
-                       }
-
-                   },
-                   icon = {
-                       Icon(
-                           if(index == selectedIndex){
-                               item.SelectedIcon
-                           }else{
-                               item.UnselectedIcon
-                           },
-                           contentDescription = item.title
-                       )
-                   },
-                   colors = NavigationDrawerItemDefaults.colors(
-                       selectedContainerColor = Color.Transparent,
-                       unselectedContainerColor = Color.Transparent,
-                       selectedTextColor = HeetoxDarkGray,
-                       unselectedTextColor = HeetoxDarkGray,
-                       selectedIconColor = HeetoxDarkGray,
-                       unselectedIconColor = HeetoxDarkGray
-                   )
-
-               )
-
-               Box(modifier = Modifier
-                   .height(2.dp)
-                   .fillMaxWidth(.9f)
-                   .background(HeetoxLightGray)
-
-               )
-
-           }
-       }
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(0.dp))
 
 
-   }
+                ) {
 
-}
+                    Column(
 
-        } ,drawerState = drawerState ) {
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .width(300.dp)
+                            .background(Color.White)
+                            .padding(30.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+
+                    ) {
+
+                        if (userData == null) {
+
+                            logoutItems.forEachIndexed { index, item ->
+
+                                NavigationDrawerItem(
+                                    modifier = Modifier
+                                        .padding(vertical = 10.dp), label = {
+                                        Text(text = item.title)
+                                    },
+                                    selected = index == selectedIndex,
+
+                                    onClick = {
+                                        selectedIndex = index
+
+                                        navController.navigate(item.route.toString())
+
+                                        scope.launch {
+                                            drawerState.close()
+                                        }
+
+                                    },
+                                    icon = {
+                                        Icon(
+                                            if (index == selectedIndex) {
+                                                item.SelectedIcon
+                                            } else {
+                                                item.UnselectedIcon
+                                            },
+                                            contentDescription = item.title
+                                        )
+                                    },
+                                    colors = NavigationDrawerItemDefaults.colors(
+                                        selectedContainerColor = Color.Transparent,
+                                        unselectedContainerColor = Color.Transparent,
+                                        selectedTextColor = HeetoxDarkGray,
+                                        unselectedTextColor = HeetoxDarkGray,
+                                        selectedIconColor = HeetoxDarkGray,
+                                        unselectedIconColor = HeetoxDarkGray
+                                    )
+
+                                )
+
+                                Box(
+                                    modifier = Modifier
+                                        .height(2.dp)
+                                        .fillMaxWidth(.9f)
+                                        .background(HeetoxLightGray)
+
+                                )
+
+                            }
+
+                        } else {
+                            loginItems.forEachIndexed { index, item ->
+
+                                NavigationDrawerItem(
+                                    modifier = Modifier
+                                        .padding(vertical = 10.dp), label = {
+                                        Text(text = item.title)
+                                    },
+                                    selected = index == selectedIndex,
+
+                                    onClick = {
+                                        selectedIndex = index
+
+                                        if (item.route == "logout") {
+
+                                            logoutUser(token)
+
+                                        } else {
+                                            navController.navigate(item.route.toString())
+                                        }
+
+                                        scope.launch {
+                                            drawerState.close()
+                                        }
+
+                                    },
+                                    icon = {
+                                        Icon(
+                                            if (index == selectedIndex) {
+                                                item.SelectedIcon
+                                            } else {
+                                                item.UnselectedIcon
+                                            },
+                                            contentDescription = item.title
+                                        )
+                                    },
+                                    colors = NavigationDrawerItemDefaults.colors(
+                                        selectedContainerColor = Color.Transparent,
+                                        unselectedContainerColor = Color.Transparent,
+                                        selectedTextColor = HeetoxDarkGray,
+                                        unselectedTextColor = HeetoxDarkGray,
+                                        selectedIconColor = HeetoxDarkGray,
+                                        unselectedIconColor = HeetoxDarkGray
+                                    )
+
+                                )
+
+                                Box(
+                                    modifier = Modifier
+                                        .height(2.dp)
+                                        .fillMaxWidth(.9f)
+                                        .background(HeetoxLightGray)
+
+                                )
+
+                            }
+                        }
+
+
+                    }
+
+                }
+
+            }, drawerState = drawerState) {
             Scaffold(
 
-              topBar = {
-                  TopAppBar(
-                      title = { 
-                              Image(painter = painterResource(id = R.drawable.heetoxlogobg), contentDescription ="logo",
-                                  modifier = Modifier
-                                      .size(100.dp)
-                                  )
-                      },
-                      navigationIcon = {
-                          IconButton(onClick = {
-                             scope.launch {
-                                 drawerState.open()
-                             }
-                          }) {
-                              Icon(imageVector =
-                              Icons.Default.Menu
-                                  , contentDescription = "" )
+                topBar = {
+                    TopAppBar(
+                        title = {
+                            Image(
+                                painter = painterResource(id = R.drawable.heetoxlogobg),
+                                contentDescription = "logo",
+                                modifier = Modifier
+                                    .size(100.dp)
+                            )
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = {
+                                scope.launch {
+                                    drawerState.open()
+                                }
+                            }) {
+                                Icon(
+                                    imageVector =
+                                    Icons.Default.Menu, contentDescription = ""
+                                )
 
-                          }
-                      },
-                              colors = TopAppBarDefaults.topAppBarColors(
-                              containerColor = HeetoxGreen
-                              )
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = HeetoxGreen
+                        )
 
-                  )
-              },
+                    )
+                },
                 containerColor = Color.Transparent,
                 modifier = Modifier
                     .background(Color.Transparent)
                     .zIndex(1f)
-            ){
-                Box(modifier = Modifier
-                    .fillMaxSize()
-                    .background(HeetoxGreen)
-                    .padding(it)
-                ){
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(HeetoxGreen)
+                        .padding(it)
+                ) {
 
 
-               Column {
-                   ProfileInputs(
-                       navController = navController, userData,
-                       getLikedProducts = {
-                           productVM.getLikedProducts(it)
-                       },
-                       uiEvent = productVM.uiEvent,
-                       likedProductsData = likedProductsData
-                   )
-                   Box(modifier = Modifier
-                       .fillMaxSize()
-                       .background(HeetoxWhite)
-                   ){
+                    Column {
+                        ProfileInputs(
+                            navController = navController, userData,
+                            getLikedProducts = {
+                                productVM.getLikedProducts(it)
+                            },
+                            uiEvent = productVM.uiEvent,
+                            likedProductsData = likedProductsData
+                        )
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(HeetoxWhite)
+                        ) {
 
 
-                   }
-               }
+                        }
+                    }
 
                 }
             }
-
 
 
         }
@@ -448,30 +385,35 @@ ModalDrawerSheet(
 
 
 
-    LaunchedEffect(Unit){
+    LaunchedEffect(Unit) {
         uiEvent.collect { event ->
             when (event) {
-                is UiEvent.Loading -> { }
+                is UiEvent.Loading -> {}
 
                 is UiEvent.Success -> {
                     when (event.action) {
                         Action.Logout -> {
-//                  navController.navigate("profile")
-                Toast.makeText(context, "Logged Out", Toast.LENGTH_SHORT).show()
-
+                            Toast.makeText(context, "Logged Out", Toast.LENGTH_SHORT).show()
                         }
-                        else->{}
+
+                        else -> {}
                     }
                 }
 
                 is UiEvent.Error -> {
                     when (event.action) {
                         Action.Logout -> {
-                            Toast.makeText(context, "Couldn't log out. Try again.", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(
+                                context,
+                                "Couldn't log out. Try again.",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
-                        else-> Unit
+
+                        else -> Unit
                     }
                 }
+
                 UiEvent.Idle -> Unit
             }
         }

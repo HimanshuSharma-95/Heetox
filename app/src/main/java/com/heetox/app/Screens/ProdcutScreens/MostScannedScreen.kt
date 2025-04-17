@@ -81,7 +81,7 @@ fun MostScannedScreen(navController : NavHostController) {
 
 
     LaunchedEffect(Unit) {
-        productListVM.uiEvent.collect { event ->
+        productListVM.uiEvent.collect{ event ->
             when (event) {
                 is UiEvent.Loading -> {
                     if (event.action == Action.AllMostScanned) {

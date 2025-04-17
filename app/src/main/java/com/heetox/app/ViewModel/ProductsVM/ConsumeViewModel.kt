@@ -60,12 +60,14 @@ class ConsumeViewModel @Inject constructor(private val productRepo : productRepo
                 else -> Unit
             }
         }
+
     }
 
 
 
 
-    fun getConsumedWeekData(token: String, week: String) {
+    fun getConsumedWeekData(token: String, week: String){
+
         viewModelScope.launch(Dispatchers.IO) {
             emitUiEvent(UiEvent.Loading(Action.GetConsumedWeekData))
 
@@ -81,11 +83,13 @@ class ConsumeViewModel @Inject constructor(private val productRepo : productRepo
                 else -> Unit
             }
         }
+
     }
 
 
 
     fun getConsumedDayData(token: String, day: String) {
+
         viewModelScope.launch(Dispatchers.IO) {
             emitUiEvent(UiEvent.Loading(Action.GetConsumedDayData))
 
@@ -101,6 +105,7 @@ class ConsumeViewModel @Inject constructor(private val productRepo : productRepo
                 else -> Unit
             }
         }
+
     }
 
 

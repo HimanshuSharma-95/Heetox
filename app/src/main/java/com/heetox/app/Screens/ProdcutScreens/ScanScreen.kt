@@ -70,12 +70,6 @@ import kotlinx.coroutines.flow.Flow
 fun ScanScreen(navController: NavController) {
 
 
-//    BackHandler {
-//        navController.navigate("home") {
-//            popUpTo("scan") { inclusive = true }
-//        }
-//    }
-
     val productVM : ProductsViewModel = hiltViewModel()
     val checkBarcodeResponseData = productVM.checkBarcode.collectAsState().value
 
@@ -363,11 +357,9 @@ fun SearchProductScreen(
 
             }
 
-
             is Resource.Nothing -> {
                 isLoading = false
             }
-
 
         }
     }

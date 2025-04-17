@@ -1,6 +1,5 @@
 package com.heetox.app.Screens.ProdcutScreens
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -14,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,9 +26,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -36,13 +34,12 @@ import androidx.navigation.NavHostController
 import com.heetox.app.Composables.GeneralCompose.LogoAndSearchBar
 import com.heetox.app.Composables.ProductCompose.ProductCard
 import com.heetox.app.Model.Authentication.LocalStoredData
-import com.heetox.app.R
 import com.heetox.app.Utils.Action
 import com.heetox.app.Utils.UiEvent
 import com.heetox.app.ViewModel.ProductsVM.ProductListViewModel
+import com.heetox.app.ui.theme.HeetoxBrightGreen
 import com.heetox.app.ui.theme.HeetoxDarkGray
 import com.heetox.app.ui.theme.HeetoxWhite
-import kotlinx.coroutines.delay
 
 
 //list after searching
@@ -66,32 +63,18 @@ fun SearchProductListScreen(search: String, navController: NavHostController,use
     }
 
 
-    var isApiCalled by rememberSaveable {
-        mutableStateOf(false)
-    }
-
-
     val currentSearch = rememberUpdatedState(search)
     val currentToken = rememberUpdatedState(userData?.Token)
 
 
-
-
     LaunchedEffect(key1 = Unit){
-
 
         val token = currentToken.value ?: ""
 
-
-        if(!isApiCalled) {
             productListVM.searchProducts(
                 currentSearch.value,
                 token
             )
-
-            isApiCalled = true
-
-        }
 
     }
 
@@ -100,10 +83,6 @@ fun SearchProductListScreen(search: String, navController: NavHostController,use
 
     if(loading || error.isNotEmpty()){
 
-
-        var degree by rememberSaveable {
-            mutableStateOf(0)
-        }
 
         Column(
             modifier = Modifier
@@ -115,20 +94,10 @@ fun SearchProductListScreen(search: String, navController: NavHostController,use
 
             if(loading){
 
-                Image(painter = painterResource(id = R.drawable.loadingcircle), contentDescription = "",
-                    modifier = Modifier
-                        .size(40.dp)
-                        .rotate(degree.toFloat()),
+                CircularProgressIndicator(
+                    modifier = Modifier.size(30.dp),
+                    color = HeetoxBrightGreen
                 )
-
-
-                LaunchedEffect(key1 = Unit) {
-                    while(true){
-                        delay(5)
-                        degree = (degree+5) % 360
-
-                    }
-                }
 
             }else{
 

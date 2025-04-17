@@ -42,17 +42,6 @@ import com.heetox.app.ui.theme.HeetoxWhite
 fun SearchScreen(navController: NavHostController){
 
 
-//    BackHandler {
-//
-//        navController.navigate("home") {
-//            popUpTo(navController.graph.startDestinationId) {
-//                inclusive = true
-//            }
-//            launchSingleTop = true
-//        }
-//
-//    }
-
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
     var searchQuery by rememberSaveable { mutableStateOf("") }
@@ -88,9 +77,7 @@ fun SearchScreen(navController: NavHostController){
 
                     if(searchQuery.isNotEmpty()){
                         navController.navigate("searchproductlist/${searchQuery}")
-//                        {
-//                            popUpTo("search") { inclusive = true }
-//                        }
+
                     }else{
                         Toast.makeText(navController.context, "Please enter something to search", Toast.LENGTH_SHORT).show()
                     }

@@ -38,7 +38,8 @@ import com.google.accompanist.swiperefresh.SwipeRefresh
 import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
 import com.heetox.app.Composables.ProductCompose.ProductCard
 import com.heetox.app.Model.Authentication.LocalStoredData
-import com.heetox.app.Utils.Resource
+import com.heetox.app.Utils.Action
+import com.heetox.app.Utils.UiEvent
 import com.heetox.app.ViewModel.ProductsVM.ProductListViewModel
 import com.heetox.app.ui.theme.HeetoxBrightGreen
 import com.heetox.app.ui.theme.HeetoxDarkGray
@@ -58,11 +59,10 @@ fun BetterAlternativesScreen(
     val productListVM: ProductListViewModel = hiltViewModel()
 
     val context = LocalContext.current
-
     val token = userData?.Token ?: ""
 
     val allProducts = productListVM.alternativeProductData.collectAsState()
-    var dataList by remember { mutableStateOf(allProducts.value.data) }
+    val dataList = allProducts.value.data
 
 
     //states for sub categories Product list
@@ -170,7 +170,7 @@ fun BetterAlternativesScreen(
                     // If dataList is empty, show a message
                     if (dataList?.isNotEmpty() == true) {
 
-                        if (dataList.isNullOrEmpty()) {
+                        if (dataList.isEmpty()) {
                             item {
                                 Text(
                                     text = "No products available",
@@ -182,7 +182,7 @@ fun BetterAlternativesScreen(
                         } else {
                             // Display product cards
                             items(
-                                dataList!!.toList(),
+                                dataList.toList(),
                                 key = { data -> data.product_barcode }) { data ->
                                 var isLiked by remember { mutableStateOf(data.isliked) }
                                 var likeCount by remember { mutableIntStateOf(data.likesCount) }
@@ -222,31 +222,33 @@ fun BetterAlternativesScreen(
         productListVM.getAlternativeProducts(subCategory,token)
     }
 
-    // Handle product list loading and errors
-    LaunchedEffect(key1 = allProducts.value) {
-        when (allProducts.value) {
-            is Resource.Error -> {
-                errorSubcategoriesList = "Oops! Couldn't Load Products :("
-                loadingSubcategoriesList = false
-                dataList = null
-            }
-            is Resource.Loading -> {
-                loadingSubcategoriesList = true
-                dataList = null
-            }
-            is Resource.Success -> {
-                loadingSubcategoriesList = false
-                dataList = if (allProducts.value.data.isNullOrEmpty()) {
-                    null
-                } else {
-                    allProducts.value.data
-                }
-            }
-            else -> {
 
+    LaunchedEffect(Unit){
+        productListVM.uiEvent.collect{ event ->
+            when(event){
+                is UiEvent.Error ->{
+                    if(event.action == Action.AlternativeProducts){
+                        errorSubcategoriesList = "Oops! Couldn't Load Products :("
+                        loadingSubcategoriesList = false
+                    }
+                }
+                is UiEvent.Loading -> {
+                    if(event.action == Action.AlternativeProducts){
+                        loadingSubcategoriesList = true
+                    }
+                }
+                is UiEvent.Success -> {
+
+                    if(event.action == Action.AlternativeProducts){
+                        loadingSubcategoriesList = false
+                        errorSubcategoriesList = ""
+                    }
+                }
+                UiEvent.Idle -> Unit
             }
         }
     }
+
 
     }
 

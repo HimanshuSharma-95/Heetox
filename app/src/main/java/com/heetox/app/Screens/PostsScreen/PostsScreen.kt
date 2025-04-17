@@ -126,14 +126,14 @@ fun PostScreen(postVM: PostsViewModel,userData:LocalStoredData?) {
 //                Spacer(modifier = Modifier.height(10.dp))
 //
 //                SegmentedControl(
-//                    options = AllandBook,
-//                    selectedIndex = AllandBookSelectedIndex,
+//                    options = AllSndBook,
+//                    selectedIndex = AllSndBookSelectedIndex,
 //                    onOptionSelected = {
-//                                       AllandBookSelectedIndex = it
+//                                       AllSndBookSelectedIndex = it
 //                    },
-//                    bgcolor = Color.White ,
+//                    bgColor = Color.White ,
 //                    selectedColor = HeetoxWhite,
-//                    selectedTextcolour = HeetoxDarkGreen
+//                    selectedTextColour = HeetoxDarkGreen
 //                )
 //
 //            }
@@ -395,14 +395,14 @@ fun PostItem(
         ){
 
             Text(
-                text = post.title ?: "",
+                text = post.title,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = HeetoxDarkGray
             )
 
             Text(
-                text = post.content ?: "",
+                text = post.content,
                 modifier = Modifier.padding(vertical = 10.dp),
                 color = Color.Black
             )

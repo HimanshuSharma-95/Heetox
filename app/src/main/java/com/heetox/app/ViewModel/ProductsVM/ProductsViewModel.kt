@@ -2,7 +2,6 @@ package com.heetox.app.ViewModel.ProductsVM
 
 import androidx.lifecycle.viewModelScope
 import com.heetox.app.Model.Product.CheckBarcodeResponse
-import com.heetox.app.Model.Product.LikeUnlikeResponse
 import com.heetox.app.Model.Product.LikedProductRepsonse
 import com.heetox.app.Model.Product.ProductbyBarcodeResponse
 import com.heetox.app.Repository.ProductRepository.productRepository
@@ -26,17 +25,12 @@ class ProductsViewModel @Inject constructor(private val productRepo : productRep
        val productByBarcodeData = _productByBarcodeData.asStateFlow()
 
 
-    private val _likeUnlikeProductData = MutableStateFlow<Resource<LikeUnlikeResponse>>(Resource.Nothing())
-        val likeUnlikeProductData = _likeUnlikeProductData.asStateFlow()
-
-
     private val _checkBarcode = MutableStateFlow<Resource<CheckBarcodeResponse>>(Resource.Nothing())
         val checkBarcode = _checkBarcode.asStateFlow()
 
 
     private val _likedProductsData = MutableStateFlow<Resource<LikedProductRepsonse>>(Resource.Nothing())
         val likedProductsData = _likedProductsData.asStateFlow()
-
 
 
 
@@ -78,11 +72,7 @@ class ProductsViewModel @Inject constructor(private val productRepo : productRep
 
             emitUiEvent(UiEvent.Loading(Action.LikeUnlike))
 
-            val response = productRepo.likeUnlikeProduct(barcode,authorization)
-
-            _likeUnlikeProductData.value = response
-
-            when (response) {
+            when (val response = productRepo.likeUnlikeProduct(barcode,authorization)) {
                 is Resource.Success -> {
                     emitUiEvent(UiEvent.Success(Action.LikeUnlike))
                 }

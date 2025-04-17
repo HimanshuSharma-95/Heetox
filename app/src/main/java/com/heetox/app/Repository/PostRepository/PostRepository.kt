@@ -18,15 +18,12 @@ class PostRepository @Inject constructor(
     private val apiService: PostInterface
 ) {
 
-
     fun getPosts(authToken: String): Flow<PagingData<Post>> {
         return Pager(
             config = PagingConfig(pageSize = 10, prefetchDistance = 2,enablePlaceholders = false,initialLoadSize = 10),
             pagingSourceFactory = { PostsPagingSource(apiService, authToken) }
         ).flow
     }
-
-
     
     suspend fun postLikeDislike(postId: String, authorization:String):Resource<postlikedislikeresponse>{
 
@@ -44,8 +41,6 @@ class PostRepository @Inject constructor(
         }
 
     }
-
-
 
     suspend fun bookmarkPost( postId:String , authorization:String ):Resource<bookmarkpostresponse>{
 

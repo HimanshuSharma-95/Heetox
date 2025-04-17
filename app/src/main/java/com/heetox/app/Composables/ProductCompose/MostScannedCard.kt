@@ -31,7 +31,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -56,7 +55,6 @@ import com.heetox.app.ui.theme.HeetoxDarkGray
 import com.heetox.app.ui.theme.HeetoxDarkGreen
 import com.heetox.app.ui.theme.HeetoxLightGray
 import com.heetox.app.ui.theme.HeetoxWhite
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 
 
@@ -101,7 +99,6 @@ fun MostScannedProductsSix(navController : NavHostController,productData: Resour
 
   if(loading || error.isNotEmpty()){
 
-      var degree by remember { mutableStateOf(0) }
 
           Column(
 
@@ -132,15 +129,6 @@ fun MostScannedProductsSix(navController : NavHostController,productData: Resour
 
              }
 
-
-
-          LaunchedEffect(key1 = Unit) {
-              while(true){
-                  delay(5)
-                  degree = (degree+5) % 360
-
-              }
-          }
       }
 
 
@@ -241,33 +229,6 @@ fun MostScannedProductsSix(navController : NavHostController,productData: Resour
         }
     }
 
-//
-//    LaunchedEffect(key1 = productData) {
-//
-//        when(productData){
-//
-//            is Resource.Error -> {
-//                error = "oops! Couldn't Load :("
-//                loading = false
-//            }
-//
-//            is Resource.Loading -> {
-//                error = " Just a second ;) "
-//                loading = true
-//            }
-//
-//            is Resource.Nothing -> {
-//
-//            }
-//
-//            is Resource.Success -> {
-//                loading = false
-//                error = ""
-//            }
-//        }
-//
-//
-//    }
 
 }
 
@@ -362,7 +323,7 @@ fun MostScannedProductsCard( data : MostScannedResponse , onClick :(barcode : St
           ){
 
 
-              val imageid =
+              val imageId =
                   if(data.product_nutriscore == "A"){
                       R.drawable.arating
                   }else if(data.product_nutriscore == "B"){
@@ -410,12 +371,12 @@ fun MostScannedProductsCard( data : MostScannedResponse , onClick :(barcode : St
 
 
 
-                  if(imageid == "No rating"){
+                  if(imageId == "No rating"){
                       Text(text = "No Rating")
                   }else {
 
                       AsyncImage(
-                          model = imageid, contentDescription = "",
+                          model = imageId, contentDescription = "",
                           modifier = Modifier
                               .width(110.dp)
                       )

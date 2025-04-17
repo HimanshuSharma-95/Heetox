@@ -106,7 +106,6 @@ class PostsViewModel @Inject constructor(
 }
 
 
-
     fun saveScrollPosition(index: Int, offset: Int) {
         scrollIndex = index
         scrollOffset = offset

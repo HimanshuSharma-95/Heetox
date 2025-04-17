@@ -116,7 +116,6 @@ fun NavBottomAndNavGraph(){
         ),
     )
 
-
     val imeState = rememberImeState()
 
     val navController = rememberNavController()
@@ -136,24 +135,20 @@ fun NavBottomAndNavGraph(){
         else -> selectedOption
     }
 
+    val hideBottomBarRoutes = listOf(
+        "login", "register", "updateprofile",
+        "forgotpassword", "changepassword", "verifyemail"
+    )
+
+
     Scaffold(bottomBar = {
 
-        //if to not show bottom navbar on these screens
-        if(currentDestination?.route == "login" ||
-            currentDestination?.route == "register" ||
-            currentDestination?.route == "updateprofile" ||
-            currentDestination?.route == "forgotpassword" ||
-            currentDestination?.route == "changepassword" ||
-            currentDestination?.route == "verifyemail"
-        ) {
-        } else {
+        //not showing bottom bar on hide routes screens
+        if(currentDestination?.route !in hideBottomBarRoutes ){
 
-            Box(
-
+        Box(
                 modifier = Modifier
-
-            ) {
-
+            ){
 
                 NavigationBar(
 
@@ -274,10 +269,9 @@ fun NavBottomAndNavGraph(){
                         .height(1.dp)
                         .background(HeetoxLightGray)
                 )
-
             }
         }
-    }) {
+    }){
 
 
         NavGraph(navController, it)
@@ -331,7 +325,6 @@ fun NavGraph(navController: NavHostController, paddingValues: PaddingValues){
             }
 
 
-//            navigation(startDestination = "search", route = "searchscreen") {
 
                 composable("search") {
                     SearchScreen(navController = navController)
@@ -349,8 +342,6 @@ fun NavGraph(navController: NavHostController, paddingValues: PaddingValues){
                         userData = userData
                     )
                 }
-
-//            }
 
 
 

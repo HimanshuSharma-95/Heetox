@@ -84,7 +84,7 @@ class AuthenticationRepository @Inject constructor(
             }
         } catch (e: Exception) {
             return Resource.Error("Couldn't get Current User Try again")
-//            Log.d("auth repo ->", "GetCurentUser: $e")
+//            Log.d("auth repo ->", "GetCurrentUser: $e")
         }
 
     }
@@ -101,7 +101,7 @@ class AuthenticationRepository @Inject constructor(
             }
         } catch (e: Exception) {
             return Resource.Error("Couldn't Logout Try again")
-//            Log.d("auht repo ->", "logoutUser: $e")
+//            Log.d("auth repo ->", "logoutUser: $e")
         }
 
     }

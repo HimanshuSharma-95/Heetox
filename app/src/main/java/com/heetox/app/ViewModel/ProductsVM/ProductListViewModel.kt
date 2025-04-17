@@ -25,8 +25,7 @@ class ProductListViewModel @Inject constructor(private val productRepo : product
     val subCategoriesData = _subCategoriesData.asStateFlow()
 
 
-    private val _alternativeProductData = MutableStateFlow<Resource<ArrayList<AlternateResponseItem>>>(
-        Resource.Nothing())
+    private val _alternativeProductData = MutableStateFlow<Resource<ArrayList<AlternateResponseItem>>>(Resource.Nothing())
     val alternativeProductData = _alternativeProductData.asStateFlow()
 
 
@@ -36,6 +35,7 @@ class ProductListViewModel @Inject constructor(private val productRepo : product
 
     private val _mostScannedProductsData = MutableStateFlow<Resource<List<MostScannedResponse>>>(Resource.Nothing())
     val mostScannedProductsData = _mostScannedProductsData.asStateFlow()
+
 
 
     fun getSubCategory(category : String){

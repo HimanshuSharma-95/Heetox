@@ -330,37 +330,6 @@ if(!isConnected){
                }
 
 
-               //  day data resources
-//               LaunchedEffect(key1 = consumedDayData.value) {
-//
-//                   when (consumedDayData.value) {
-//                       is Resource.Error -> {
-//                           loading = false
-//                           error = "oops! something went wrong"
-//                       }
-//
-//                       is Resource.Loading -> {
-//
-//                           error = ""
-//                           loading = true
-//                       }
-//
-//                       is Resource.Nothing -> {
-//                           error = ""
-//                           loading = false
-//
-//                       }
-//
-//                       is Resource.Success -> {
-//
-//                           error = ""
-//                           loading = false
-//
-//                       }
-//                   }
-//
-//               }
-
 
 
                Column(
@@ -791,44 +760,6 @@ if(!isConnected){
                }
 
 
-//               LaunchedEffect(key1 = consumedWeekData.value) {
-//
-//                   when (consumedWeekData.value) {
-//
-//                       is Resource.Error -> {
-//                           loading = false
-//                           error = "oops! something went wrong"
-//                       }
-//
-//                       is Resource.Loading -> {
-//
-//                           error = ""
-//                           loading = true
-//                       }
-//
-//                       is Resource.Nothing -> {
-//
-//                           error = ""
-//                           loading = false
-//
-//                       }
-//
-//                       is Resource.Success -> {
-//
-//                           error = ""
-//                           loading = false
-//
-//                           if (token != null) {
-//                               consumedVM.getConsumedDayData(
-//                                   token,
-//                                   dates[daysSelectedIndex]
-//                               )
-//                           }
-//                       }
-//                   }
-//
-//               }
-
 
                //arrow and start end date
                Column(
@@ -990,9 +921,8 @@ if(!isConnected){
                                )
                            }
                        } else {
-                           // Ensure ConsumedWeekData has non-empty week data
-                           val weekData = consumedWeekData.value.data?.totalproductconsumed
 
+                           val weekData = consumedWeekData.value.data?.totalproductconsumed
 
                            if (weekData != null) {
 
@@ -1007,30 +937,36 @@ if(!isConnected){
                                    ) {
 
 
-                                       NutritionalValues(
-                                           calcium = consumedWeekData.value.data!!.totalNutritionalValue.calcium,
-                                           cholesterol = consumedWeekData.value.data!!.totalNutritionalValue.cholestrol,
-                                           dietaryFibre = consumedWeekData.value.data!!.totalNutritionalValue.dietry_fibre,
-                                           energy = consumedWeekData.value.data!!.totalNutritionalValue.energy,
-                                           iron = consumedWeekData.value.data!!.totalNutritionalValue.iron,
-                                           magnesium = consumedWeekData.value.data!!.totalNutritionalValue.magnessium,
-                                           phosphorous = consumedWeekData.value.data!!.totalNutritionalValue.phosphorous,
-                                           potassium = consumedWeekData.value.data!!.totalNutritionalValue.potassium,
-                                           protein = consumedWeekData.value.data!!.totalNutritionalValue.protein,
-                                           saturatedFats = consumedWeekData.value.data!!.totalNutritionalValue.saturates_fats,
-                                           sodium = consumedWeekData.value.data!!.totalNutritionalValue.sodium,
-                                           totalCarbohydrates = consumedWeekData.value.data!!.totalNutritionalValue.total_carbohydrates,
-                                           totalFats = consumedWeekData.value.data!!.totalNutritionalValue.total_fats,
-                                           totalSugar = consumedWeekData.value.data!!.totalNutritionalValue.total_sugar,
-                                           transFats = consumedWeekData.value.data!!.totalNutritionalValue.trans_fats,
-                                           unsaturatedFats = consumedWeekData.value.data!!.totalNutritionalValue.saturates_fats,
-                                           vitaminA = consumedWeekData.value.data!!.totalNutritionalValue.vitamin_A,
-                                           vitaminB = consumedWeekData.value.data!!.totalNutritionalValue.vitamin_B,
-                                           vitaminC = consumedWeekData.value.data!!.totalNutritionalValue.vitamin_C,
-                                           vitaminD = consumedWeekData.value.data!!.totalNutritionalValue.vitamin_D,
-                                           vitaminE = consumedWeekData.value.data!!.totalNutritionalValue.vitamin_E,
-                                           zinc = consumedWeekData.value.data!!.totalNutritionalValue.zinc
-                                       )
+                                       val nutritionalValue =
+                                           consumedWeekData.value.data?.totalNutritionalValue
+
+                                       if (nutritionalValue != null) {
+                                           NutritionalValues(
+                                               calcium = nutritionalValue.calcium,
+                                               cholesterol = nutritionalValue.cholestrol,
+                                               dietaryFibre = nutritionalValue.dietry_fibre,
+                                               energy = nutritionalValue.energy,
+                                               iron = nutritionalValue.iron,
+                                               magnesium = nutritionalValue.magnessium,
+                                               phosphorous = nutritionalValue.phosphorous,
+                                               potassium = nutritionalValue.potassium,
+                                               protein = nutritionalValue.protein,
+                                               saturatedFats = nutritionalValue.saturates_fats,
+                                               sodium = nutritionalValue.sodium,
+                                               totalCarbohydrates = nutritionalValue.total_carbohydrates,
+                                               totalFats = nutritionalValue.total_fats,
+                                               totalSugar = nutritionalValue.total_sugar,
+                                               transFats = nutritionalValue.trans_fats,
+                                               unsaturatedFats = nutritionalValue.saturates_fats,
+                                               vitaminA = nutritionalValue.vitamin_A,
+                                               vitaminB = nutritionalValue.vitamin_B,
+                                               vitaminC = nutritionalValue.vitamin_C,
+                                               vitaminD = nutritionalValue.vitamin_D,
+                                               vitaminE = nutritionalValue.vitamin_E,
+                                               zinc = nutritionalValue.zinc
+                                           )
+                                       }
+
                                    }
 
                                    Text(
@@ -1168,41 +1104,6 @@ if(!isConnected){
                        }
                    }
                }
-
-
-               // Month data resources
-//               LaunchedEffect(key1 = consumedMonthData.value) {
-//
-//                   when (consumedMonthData.value) {
-//
-//                       is Resource.Error -> {
-//                           loading = false
-//                           error = "oops! something went wrong"
-//                       }
-//
-//                       is Resource.Loading -> {
-//
-//                           error = ""
-//                           loading = true
-//                       }
-//
-//                       is Resource.Nothing -> {
-//
-//                           error = ""
-//                           loading = false
-//
-//                       }
-//
-//                       is Resource.Success -> {
-//
-//                           error = ""
-//                           loading = false
-//
-//                       }
-//                   }
-//
-//               }
-
 
                Column(
                    modifier = Modifier
@@ -1473,53 +1374,6 @@ if(!isConnected){
         }
     }
 
-//    LaunchedEffect(key1 = deleteConsumeData.value) {
-//
-//        when (deleteConsumeData.value) {
-//
-//            is Resource.Error -> {
-//                loading = false
-//                error = "oops! something went wrong"
-//            }
-//
-//            is Resource.Loading -> {
-//
-//                error = ""
-//                loading = true
-//            }
-//
-//            is Resource.Nothing -> {
-//                error = ""
-//                loading = false
-//            }
-//
-//            is Resource.Success -> {
-//
-//                error = ""
-//                loading = false
-//
-//                if (token != null) {
-//
-//                    consumedVM.getConsumedWeekData(
-//                        token,
-//                        selectedWeek
-//                    )
-//
-////                    ProductVM.getConsumedDayData(
-////                        token,
-////                        Dates[DaysselectedIndex]
-////                    )
-//
-//
-//                }
-//
-//
-//            }
-//
-//        }
-//
-//
-//    }
 
 }
 
@@ -1833,8 +1687,7 @@ fun CalorieBarVertical(
     unselectedBarColor: Color,
     selectedTextColor: Color,
     unselectedTextColor: Color,
-    index : Int
-    ,
+    index : Int,
     onClick :(Int) -> Unit
 
 ) {

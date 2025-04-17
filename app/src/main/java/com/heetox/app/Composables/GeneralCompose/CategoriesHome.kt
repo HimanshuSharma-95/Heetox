@@ -46,7 +46,7 @@ fun CategoriesHome(categoriesData : Resource<CategoriesResponse>, navController:
     val categoriesList = categoriesData.data?.categories
 
     var loading by rememberSaveable {
-        mutableStateOf(true)
+        mutableStateOf(false)
     }
 
     var error by rememberSaveable {
@@ -85,7 +85,9 @@ fun CategoriesHome(categoriesData : Resource<CategoriesResponse>, navController:
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight(),
+                        .fillMaxHeight()
+                        .padding(20.dp)
+                    ,
 
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -103,7 +105,8 @@ fun CategoriesHome(categoriesData : Resource<CategoriesResponse>, navController:
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight(),
+                        .fillMaxHeight()
+                        .padding(20.dp),
 
                     verticalArrangement = Arrangement.Center,
                     horizontalAlignment = Alignment.CenterHorizontally
