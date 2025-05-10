@@ -1,4 +1,4 @@
-Heetox 🌿
+Heetox 🌿 ( PlayStore - [View](https://play.google.com/store/apps/details?id=com.heetox.app&pcampaignid=web_share) )
 -
 
 Heetox is a health-focused Android application that empowers users to make healthier 
