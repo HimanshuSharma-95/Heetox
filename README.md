@@ -40,5 +40,5 @@ Repository Pattern
 
 
 **App Introduction**
-
+-
 <img width="500" alt="11" src="https://github.com/user-attachments/assets/cfc8957a-1dca-4cc6-a7ad-095cf753501a" />
