@@ -37,3 +37,8 @@ Repository Pattern
 **App Demo**
 -
 [View Demo](https://drive.google.com/file/d/17WZqIWzFAnbM3GcV48lnef76CyDDQMsx/view)
+
+
+**App Introduction**
+
+<img width="922" alt="11" src="https://github.com/user-attachments/assets/cfc8957a-1dca-4cc6-a7ad-095cf753501a" />
